@@ -645,6 +645,9 @@ function onPlayerDragging(event: MouseEvent) {
     if (showLyrics.value) {
       playerHeight += 225
     }
+    if (hasError.value) {
+      playerHeight += 130 // 错误提示区域额外高度
+    }
   }
   else {
     playerHeight = 64
