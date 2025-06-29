@@ -615,7 +615,6 @@ function startPlayerDragging(event: MouseEvent) {
     x: event.clientX - playerPosition.value.x,
     y: event.clientY - playerPosition.value.y,
   }
-
   document.addEventListener('mousemove', onPlayerDragging)
   document.addEventListener('mouseup', stopPlayerDragging)
   event.preventDefault()
@@ -642,9 +641,9 @@ function onPlayerDragging(event: MouseEvent) {
 
   let playerHeight
   if (isExpanded.value) {
-    playerHeight = 400
+    playerHeight = 605
     if (showLyrics.value) {
-      playerHeight += 200
+      playerHeight += 225
     }
   }
   else {
@@ -660,6 +659,7 @@ function onPlayerDragging(event: MouseEvent) {
   const boundedX = Math.max(margin, Math.min(newX, windowWidth - playerWidth - margin))
   const boundedY = Math.max(margin, Math.min(newY, windowHeight - playerHeight - margin))
 
+  console.log(`拖拽位置: (${boundedX}, ${boundedY})`, playerHeight)
   playerPosition.value = {
     x: boundedX,
     y: boundedY,
@@ -2072,11 +2072,7 @@ onUnmounted(() => {
   font-weight: 600;
   transform: translateX(0.25rem) translateZ(0);
   background: linear-gradient(90deg, rgba(139, 92, 246, 0.12) 0%, rgba(236, 72, 153, 0.08) 50%, transparent 100%);
-  font-size: 0.9rem;
-  /* 添加微妙的左边框 */
-  border-left: 3px solid #8b5cf6;
-  padding-left: 0.875rem;
-  /* 添加更平滑的变化 */
+  font-size: 0.95rem;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 

@@ -1,13 +1,5 @@
 <script setup lang="ts">
 import MusicPlayer from '../components/MusicPlayer.vue'
-
-const name = ref('')
-
-const router = useRouter()
-function go() {
-  if (name.value)
-    router.push(`/hi/${encodeURIComponent(name.value)}`)
-}
 </script>
 
 <template>
@@ -22,7 +14,7 @@ function go() {
       </div>
 
       <!-- 音乐播放器 -->
-        <MusicPlayer />
+      <MusicPlayer />
     </div>
   </div>
 </template>
