@@ -726,9 +726,12 @@ function checkPlayerBoundaries() {
   let playerHeight
   if (isExpanded.value) {
     // 展开模式高度估算：封面(12rem) + 歌曲信息(3rem) + 控制器(4rem) + 间距等 ≈ 25rem = 400px
-    playerHeight = 400
+    playerHeight = 605
     if (showLyrics.value) {
-      playerHeight += 200 // 歌词区域额外高度
+      playerHeight += 225
+    }
+    if (hasError.value) {
+      playerHeight += 130 // 错误提示区域额外高度
     }
   }
   else {
@@ -797,6 +800,11 @@ watch(showLyrics, () => {
 
 // 监听播放器尺寸变化，重新检查边界
 watch(() => playerSize.value.width, () => {
+  debouncedBoundaryCheck()
+})
+
+// 新增：监听hasError变化，防抖检查边界
+watch(() => [hasError.value, showLyrics.value], () => {
   debouncedBoundaryCheck()
 })
 
