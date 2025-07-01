@@ -1087,7 +1087,6 @@ onUnmounted(() => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
   cursor: grab;
-  position: relative; /* 确保伪元素定位正确 */
 }
 
 .music-player.dragging {
