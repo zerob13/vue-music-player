@@ -859,7 +859,7 @@ onUnmounted(() => {
         </div>
       </div>
       <button class="mini-play-btn" :disabled="isLoading || hasError" :class="{ error: hasError }" @click.stop="togglePlay">
-        <i v-if="isLoading" class="i-carbon-restart text-lg animate-spin" />
+        <i v-if="isLoading" class="i-carbon-restart text-lg hover:bg-red-100 animate-spin" />
         <i v-else-if="hasError" class="i-carbon-warning text-lg" />
         <i v-else :class="isPlaying ? 'i-carbon-pause-filled' : 'i-carbon-play-filled'" class="text-lg" />
       </button>

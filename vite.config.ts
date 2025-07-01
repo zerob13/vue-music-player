@@ -1,38 +1,82 @@
+import Vue from '@vitejs/plugin-vue'
 /// <reference types="vitest" />
 
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import tailwindcss from '@tailwindcss/vite'
-import Vue from '@vitejs/plugin-vue'
-import AutoImport from 'unplugin-auto-import/vite'
+import UnpluginClassExtractor from 'unplugin-class-extractor/vite'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
+import dts from 'vite-plugin-dts'
+import { name } from './package.json'
 import Pages from 'vite-plugin-pages'
+import AutoImport from 'unplugin-auto-import/vite'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 
-export default defineConfig({
-  base: './',
-  resolve: {
-    alias: {
-      '~/': `${resolve(__dirname, 'src')}/`,
-    },
-  },
-  plugins: [
-    tailwindcss(),
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => {
+  const base = '/'
+  let plugins = [
     Vue(),
-    Pages(),
     AutoImport({
-      imports: ['vue', 'vue-router', '@vueuse/core'],
+      imports: ['vue', 'vue-router'],
       dts: true,
     }),
-    Components({
+    Pages(),
+    Components(),
+  ]
+
+  let build: Record<string, any> = {
+    target: 'es2015',
+    cssTarget: 'chrome61',
+  }
+
+  if (mode === 'npm') {
+    plugins = [
+      Vue(),
+    AutoImport({
+      imports: ['vue', 'vue-router'],
       dts: true,
     }),
-    // see unocss.config.ts for config
-  ],
-  test: {
-    environment: 'jsdom',
-  },
+    Pages(),
+    Components(),
+      dts({
+        outDir: 'dist/types',
+      }),
+      UnpluginClassExtractor({
+        output: 'dist/tailwind.ts',
+        include: [
+          /\/src\/components\/(?:[^/]+\/)*[^/]+\.vue(\?.*)?$/,
+        ],
+      }) as any,
+    ]
+    build = {
+      target: 'es2015',
+      cssTarget: 'chrome61',
+      copyPublicDir: false,
+      lib: {
+        entry: './src/exports.ts',
+        formats: ['cjs', 'es'],
+        name,
+        fileName: 'index',
+      },
+      rollupOptions: {
+        external: ['vue'],
+        output: {
+          globals: {
+            vue: 'Vue',
+          },
+          exports: 'named',
+        },
+      },
+    }
+  }
+
+  return {
+    base,
+    plugins,
+    build,
+    resolve: {
+      alias: {
+        '@': '/src',
+      },
+    },
+  }
 })
