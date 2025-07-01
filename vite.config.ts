@@ -1,14 +1,13 @@
 import Vue from '@vitejs/plugin-vue'
 /// <reference types="vitest" />
 
+import AutoImport from 'unplugin-auto-import/vite'
 import UnpluginClassExtractor from 'unplugin-class-extractor/vite'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
-import { name } from './package.json'
 import Pages from 'vite-plugin-pages'
-import AutoImport from 'unplugin-auto-import/vite'
-
+import { name } from './package.json'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -31,12 +30,12 @@ export default defineConfig(({ mode }) => {
   if (mode === 'npm') {
     plugins = [
       Vue(),
-    AutoImport({
-      imports: ['vue', 'vue-router'],
-      dts: true,
-    }),
-    Pages(),
-    Components(),
+      AutoImport({
+        imports: ['vue', 'vue-router'],
+        dts: true,
+      }),
+      Pages(),
+      Components(),
       dts({
         outDir: 'dist/types',
       }),

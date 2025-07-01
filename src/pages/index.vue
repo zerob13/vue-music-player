@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Song } from '../components/type'
 import daoxiangLrc from '../../public/audio/daoxiang.lrc'
 import kaibuliaokouLrc from '../../public/audio/kaibuliaokou.lrc'
 import MusicPlayer from '../components/MusicPlayer.vue'
