@@ -1,19 +1,13 @@
 <script setup lang="ts">
+import type { Song } from './type'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
-interface Song {
-  id: number
-  title: string
-  artist: string
-  cover: string
-  src: string
-  lyrics?: LyricLine[]
-}
-
-interface LyricLine {
-  time: number // 时间戳（秒）
-  text: string // 歌词文本
-}
+const props = defineProps({
+  playlist: {
+    type: Array as () => Song[],
+    required: true,
+  },
+})
 
 // 响应式数据
 const isPlaying = ref(false)
@@ -48,6 +42,45 @@ const playerSize = ref({ width: 320, height: 'auto' })
 const dragOffset = ref({ x: 0, y: 0 })
 const hasDraggedPlayer = ref(false) // 添加标记来跟踪是否真正拖拽了
 
+// 封面图片加载相关
+const coverImageError = ref(false)
+
+// 默认的音乐封面SVG占位图
+const defaultCoverSvg = `data:image/svg+xml;base64,${btoa(`
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#grad1)"/>
+  <circle cx="200" cy="200" r="80" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  <circle cx="200" cy="200" r="60" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <circle cx="200" cy="200" r="40" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <circle cx="200" cy="200" r="20" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <circle cx="200" cy="200" r="8" fill="rgba(255,255,255,0.8)"/>
+  <path d="M160 160 L240 160 L240 180 L220 200 L200 240 L180 200 L160 180 Z" fill="rgba(255,255,255,0.6)"/>
+  <path d="M180 170 L220 170 L220 185 L205 195 L200 220 L195 195 L180 185 Z" fill="rgba(255,255,255,0.8)"/>
+</svg>
+`)}`
+
+// 处理封面图片加载错误
+function handleCoverImageError() {
+  coverImageError.value = true
+}
+
+// 重置封面图片错误状态
+function resetCoverImageError() {
+  coverImageError.value = false
+}
+
+const currentSong = computed(() => props.playlist[currentIndex.value])
+// 获取当前封面图片URL
+const currentCover = computed(() => {
+  return coverImageError.value ? defaultCoverSvg : currentSong.value.cover
+})
+
 // 歌词相关
 const showLyrics = ref(false)
 const currentLyricIndex = ref(-1)
@@ -64,84 +97,7 @@ const lyricsContainer = ref<HTMLElement>()
 let resizeHandler: (() => void) | null = null
 let clickHandler: ((event: Event) => void) | null = null
 
-// 示例播放列表 - 包含本地和在线备用音频及歌词
-const playlist = ref<Song[]>([
-  {
-    id: 1,
-    title: 'Sample Music 1',
-    artist: 'Demo Artist',
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=faces',
-    src: '/audio/sample1.mp3', // 本地文件 - 如不存在会显示错误，但功能正常
-    lyrics: [
-      { time: 0, text: '这是一首示例歌曲' },
-      { time: 5, text: '展示音乐播放器的功能' },
-      { time: 10, text: '包括歌词同步显示' },
-      { time: 15, text: '点击歌词可以跳转播放' },
-      { time: 20, text: '享受美妙的音乐时光' },
-      { time: 25, text: '歌词会自动滚动' },
-      { time: 30, text: '不会出现跳动现象' },
-    ],
-  },
-  {
-    id: 2,
-    title: 'Nature Sounds Demo',
-    artist: 'Online Demo',
-    cover: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=400&fit=crop&crop=faces',
-    src: 'https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3', // 在线演示文件
-    lyrics: [
-      { time: 0, text: 'Kalimba melody starts' },
-      { time: 5, text: 'Gentle notes flowing' },
-      { time: 10, text: 'Peaceful and serene' },
-      { time: 15, text: 'Nature\'s harmony' },
-      { time: 20, text: 'Music for the soul' },
-      { time: 25, text: 'Relax and enjoy' },
-    ],
-  },
-  {
-    id: 3,
-    title: 'Test Audio',
-    artist: 'Web Demo',
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=faces',
-    src: 'https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3',
-    lyrics: [
-      { time: 0, text: 'Epic game music begins' },
-      { time: 8, text: 'Adventure awaits' },
-      { time: 16, text: 'Heroes rise up' },
-      { time: 24, text: 'Battle theme intensifies' },
-      { time: 32, text: 'Victory is near' },
-      { time: 40, text: 'The quest continues' },
-    ],
-  },
-  {
-    id: 4,
-    title: 'Acoustic Guitar',
-    artist: 'String Harmony',
-    cover: 'https://images.unsplash.com/photo-1518737001226-cce982a783fb?w=400&h=400&fit=crop&crop=faces',
-    src: '/audio/sample4.mp3',
-    lyrics: [
-      { time: 0, text: 'Gentle guitar strings' },
-      { time: 4, text: 'Melody flows like water' },
-      { time: 8, text: 'Harmonious and pure' },
-      { time: 12, text: 'Acoustic perfection' },
-    ],
-  },
-  {
-    id: 5,
-    title: 'Piano Melody',
-    artist: 'Classical Collection',
-    cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=400&fit=crop&crop=faces',
-    src: '/audio/sample5.mp3',
-    lyrics: [
-      { time: 0, text: 'Piano keys dancing' },
-      { time: 5, text: 'Classical beauty unfolds' },
-      { time: 10, text: 'Timeless melodies' },
-      { time: 15, text: 'Music speaks to the heart' },
-    ],
-  },
-])
-
 // 计算属性
-const currentSong = computed(() => playlist.value[currentIndex.value])
 const progressPercentage = computed(() =>
   duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0,
 )
@@ -190,7 +146,7 @@ async function togglePlay() {
 }
 
 function nextSong() {
-  if (currentIndex.value < playlist.value.length - 1) {
+  if (currentIndex.value < props.playlist.length - 1) {
     currentIndex.value++
     loadCurrentSong()
   }
@@ -206,10 +162,10 @@ function previousSong() {
 // 自动跳过有错误的歌曲
 async function skipToNextPlayableSong() {
   let attempts = 0
-  const maxAttempts = playlist.value.length
+  const maxAttempts = props.playlist.length
 
   while (attempts < maxAttempts && hasError.value) {
-    if (currentIndex.value < playlist.value.length - 1) {
+    if (currentIndex.value < props.playlist.length - 1) {
       currentIndex.value++
     }
     else {
@@ -438,7 +394,7 @@ function onTimeUpdate() {
 }
 
 function onSongEnd() {
-  if (currentIndex.value < playlist.value.length - 1) {
+  if (currentIndex.value < props.playlist.length - 1) {
     nextSong()
   }
   else {
@@ -786,6 +742,7 @@ watch(currentIndex, () => {
   loadCurrentSong()
   currentLyricIndex.value = -1 // 重置歌词索引
   lastScrollTime.value = 0 // 重置滚动时间戳
+  resetCoverImageError() // 重置封面图片错误状态
 
   // 重置歌词滚动位置
   if (lyricsContainer.value) {
@@ -882,10 +839,11 @@ onUnmounted(() => {
     <div v-if="!isExpanded" class="mini-player" @click="handleMiniPlayerClick">
       <div class="mini-cover">
         <img
-          :src="currentSong.cover"
+          :src="currentCover"
           :alt="currentSong.title"
           class="cover-image"
           :class="{ playing: isPlaying }"
+          @error="handleCoverImageError"
         >
       </div>
       <div class="mini-info">
@@ -957,11 +915,11 @@ onUnmounted(() => {
       <div class="album-cover-container">
         <div class="album-cover" :class="{ playing: isPlaying }">
           <img
-            :src="currentSong.cover"
+            :src="currentCover"
             :alt="currentSong.title"
             class="cover-image"
+            @error="handleCoverImageError"
           >
-          <div class="vinyl-hole" />
         </div>
       </div>
 
@@ -1012,7 +970,7 @@ onUnmounted(() => {
             }"
             @click="seekToLyricTime(line.time)"
           >
-            {{ line.text }}
+            {{ line.words }}
           </div>
           <div v-if="currentLyrics.length === 0" class="no-lyrics">
             <i class="i-carbon-music text-2xl opacity-50" />
@@ -1587,6 +1545,15 @@ onUnmounted(() => {
   }
 }
 
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .mini-play-btn.error:hover {
   background: linear-gradient(to right, #b91c1c, #dc2626);
 }
@@ -1878,18 +1845,6 @@ onUnmounted(() => {
 
 .album-cover:hover img {
   transform: scale(1.05);
-}
-
-.vinyl-hole {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 2rem;
-  height: 2rem;
-  background: #1f2937;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 /* 改进的进度条样式 */
