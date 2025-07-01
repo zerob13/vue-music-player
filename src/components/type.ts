@@ -7,7 +7,7 @@ export interface Song {
   lyrics?: LyricLine[]
 }
 
-interface LyricLine {
+export interface LyricLine {
   time: number // 时间戳（秒）
   words: string // 歌词文本
 }

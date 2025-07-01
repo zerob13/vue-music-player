@@ -1,8 +1,8 @@
 import type { App, Plugin } from 'vue'
 
-import MusicPlayer from './components/MusicPlayer.vue'
+import MusicPlayer from './MusicPlayer.vue'
 
-export type { Song } from './components/type'
+export type { Song } from './type.js'
 
 export {
   MusicPlayer,

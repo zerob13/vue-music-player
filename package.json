@@ -3,6 +3,17 @@
   "type": "module",
   "private": true,
   "packageManager": "pnpm@10.9.0",
+    "exports": {
+    ".": {
+      "types": "./dist/types/MusicPlayer.vue.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./index.css": "./dist/index.css"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/types/exports.d.ts",
   "scripts": {
     "build:npm": "vite build --mode npm",
     "build": "vite build",

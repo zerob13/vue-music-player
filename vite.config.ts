@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
       Components(),
       dts({
         outDir: 'dist/types',
+        include:['src/components/**/*'],
       }),
       UnpluginClassExtractor({
         output: 'dist/tailwind.ts',
@@ -51,7 +52,7 @@ export default defineConfig(({ mode }) => {
       cssTarget: 'chrome61',
       copyPublicDir: false,
       lib: {
-        entry: './src/exports.ts',
+        entry: './src/components/exports.ts',
         formats: ['cjs', 'es'],
         name,
         fileName: 'index',
