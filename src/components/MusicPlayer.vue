@@ -513,6 +513,17 @@ function onDragging(event: MouseEvent) {
   }
 }
 
+// 进度条悬停处理函数
+function onProgressHover(event: MouseEvent) {
+  if (!progressBar.value || isDragging.value)
+    return
+
+  const rect = progressBar.value.getBoundingClientRect()
+  const percentage = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
+  tooltipPosition.value = percentage * 100
+  tooltipTime.value = percentage * duration.value
+}
+
 function stopDragging() {
   isDragging.value = false
   document.removeEventListener('mousemove', onDragging)
@@ -750,8 +761,8 @@ function checkPlayerBoundaries() {
   const deltaX = Math.abs(boundedX - playerPosition.value.x)
   const deltaY = Math.abs(boundedY - playerPosition.value.y)
 
-  // 增加阈值，只有明显超出边界才调整
-  if (deltaX > 10 || deltaY > 10) {
+  // 增加更大的阈值，减少不必要的位置调整
+  if (deltaX > 30 || deltaY > 30) {
     playerPosition.value = {
       x: boundedX,
       y: boundedY,
@@ -862,7 +873,7 @@ onUnmounted(() => {
       @mousedown="startResizing"
     />
     <!-- 流线型边框效果 -->
-    <div v-if="isPlaying" class="border-animation" />
+    <!-- 流线型边框效果 - 现在通过CSS伪元素实现 -->
 
     <!-- 背景模糊效果 -->
     <div class="player-backdrop" :class="{ 'mini-backdrop': !isExpanded, 'expanded-backdrop': isExpanded }" />
@@ -1030,7 +1041,7 @@ onUnmounted(() => {
           class="progress-bar"
           @click="seekTo"
           @mousedown="startDragging"
-          @mousemove="onDragging"
+          @mousemove="onProgressHover"
           @mouseup="stopDragging"
           @mouseenter="isHovering = true"
           @mouseleave="() => { isHovering = false; stopDragging(); }"
@@ -1181,86 +1192,56 @@ onUnmounted(() => {
   border-bottom-color: rgba(156, 163, 175, 0.5);
 }
 
-/* 流线型边框动画 */
-.border-animation {
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    transparent 20deg,
-    #8b5cf6 45deg,
-    #ec4899 90deg,
-    #06b6d4 135deg,
-    #10b981 180deg,
-    #f59e0b 225deg,
-    #ef4444 270deg,
-    #8b5cf6 315deg,
-    transparent 340deg,
-    transparent 360deg
-  );
-  animation: borderRotate 4s linear infinite;
-  z-index: 0;
-  /* 确保不影响布局 */
-  pointer-events: none;
+/* 播放时的流动光效边框 - 完全不影响布局 */
+.music-player.playing {
+  /* 移除 position: relative 避免影响定位 */
+  /* 保持原有阴影，只添加动画边框 */
+  animation: flowingBorderGlow 3s ease-in-out infinite;
 }
 
-.border-animation::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: inherit;
-  filter: blur(12px);
-  opacity: 0.6;
-  animation: borderRotate 4s linear infinite reverse;
-}
-
-.border-animation::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: inherit;
-  z-index: 1;
-}
-
-.dark .border-animation::after {
-  background: rgba(31, 41, 55, 0.95);
-}
-
-.music-player.mini .border-animation,
-.music-player.mini .border-animation::after {
-  border-radius: 2rem;
-}
-
-.music-player.expanded .border-animation,
-.music-player.expanded .border-animation::after {
-  border-radius: 1.5rem;
-}
-
-@keyframes borderRotate {
+@keyframes flowingBorderGlow {
   0% {
-    transform: rotate(0deg);
+    box-shadow:
+      0 0 0 2px rgba(139, 92, 246, 0.8),
+      0 0 10px 2px rgba(139, 92, 246, 0.4),
+      0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
-  100% {
-    transform: rotate(360deg);
+  16.6% {
+    box-shadow:
+      0 0 0 2px rgba(236, 72, 153, 0.8),
+      0 0 10px 2px rgba(236, 72, 153, 0.4),
+      0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
-}
-
-@keyframes borderPulse {
-  0%, 100% {
-    opacity: 0.6;
+  33.3% {
+    box-shadow:
+      0 0 0 2px rgba(6, 182, 212, 0.8),
+      0 0 10px 2px rgba(6, 182, 212, 0.4),
+      0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
   50% {
-    opacity: 0.9;
+    box-shadow:
+      0 0 0 2px rgba(16, 185, 129, 0.8),
+      0 0 10px 2px rgba(16, 185, 129, 0.4),
+      0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
-}
-
-/* 添加脉冲效果 - 移除scale变换，避免影响布局 */
-.music-player.playing {
-  animation: borderPulse 2s ease-in-out infinite;
+  66.6% {
+    box-shadow:
+      0 0 0 2px rgba(245, 158, 11, 0.8),
+      0 0 10px 2px rgba(245, 158, 11, 0.4),
+      0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  83.3% {
+    box-shadow:
+      0 0 0 2px rgba(239, 68, 68, 0.8),
+      0 0 10px 2px rgba(239, 68, 68, 0.4),
+      0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(139, 92, 246, 0.8),
+      0 0 10px 2px rgba(139, 92, 246, 0.4),
+      0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
 }
 
 /* 背景效果 */
@@ -1977,6 +1958,7 @@ onUnmounted(() => {
   border-radius: 0.25rem;
   white-space: nowrap;
   margin-bottom: 0.5rem;
+  pointer-events: none;
 }
 
 .progress-labels {
@@ -2089,7 +2071,6 @@ onUnmounted(() => {
 
 .lyrics-line.passed {
   color: #d1d5db;
-  opacity: 0.6;
 }
 
 .dark .lyrics-line {
