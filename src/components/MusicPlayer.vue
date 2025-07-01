@@ -1081,12 +1081,13 @@ onUnmounted(() => {
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.8);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
+  overflow: visible; /* 改为 visible 以显示边框动画 */
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
   cursor: grab;
+  position: relative; /* 确保伪元素定位正确 */
 }
 
 .music-player.dragging {
@@ -1150,55 +1151,57 @@ onUnmounted(() => {
   border-bottom-color: rgba(156, 163, 175, 0.5);
 }
 
-/* 播放时的流动光效边框 - 完全不影响布局 */
-.music-player.playing {
-  /* 移除 position: relative 避免影响定位 */
-  /* 保持原有阴影，只添加动画边框 */
-  animation: flowingBorderGlow 3s ease-in-out infinite;
+/* 播放时的流动边框动画 - 使用双伪元素实现边框裁剪 */
+.music-player.playing::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  background: linear-gradient(45deg, #8b5cf6, #ec4899, #06b6d4, #10b981, #f59e0b, #ef4444, #8b5cf6);
+  background-size: 400% 400%;
+  animation: flowing-gradient 3s linear infinite;
+  z-index: -2;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
-@keyframes flowingBorderGlow {
+.music-player.playing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: -1;
+}
+
+.music-player.mini.playing::before {
+  border-radius: calc(2rem + 3px);
+}
+
+.music-player.mini.playing::after {
+  border-radius: 2rem;
+}
+
+.music-player.expanded.playing::before {
+  border-radius: calc(1.5rem + 3px);
+}
+
+.music-player.expanded.playing::after {
+  border-radius: 1.5rem;
+}
+
+.music-player:not(.playing)::before,
+.music-player:not(.playing)::after {
+  opacity: 0;
+}
+
+@keyframes flowing-gradient {
   0% {
-    box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.8),
-      0 0 10px 2px rgba(139, 92, 246, 0.4),
-      0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  }
-  16.6% {
-    box-shadow:
-      0 0 0 2px rgba(236, 72, 153, 0.8),
-      0 0 10px 2px rgba(236, 72, 153, 0.4),
-      0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  }
-  33.3% {
-    box-shadow:
-      0 0 0 2px rgba(6, 182, 212, 0.8),
-      0 0 10px 2px rgba(6, 182, 212, 0.4),
-      0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    background-position: 0% 50%;
   }
   50% {
-    box-shadow:
-      0 0 0 2px rgba(16, 185, 129, 0.8),
-      0 0 10px 2px rgba(16, 185, 129, 0.4),
-      0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  }
-  66.6% {
-    box-shadow:
-      0 0 0 2px rgba(245, 158, 11, 0.8),
-      0 0 10px 2px rgba(245, 158, 11, 0.4),
-      0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  }
-  83.3% {
-    box-shadow:
-      0 0 0 2px rgba(239, 68, 68, 0.8),
-      0 0 10px 2px rgba(239, 68, 68, 0.4),
-      0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    background-position: 100% 50%;
   }
   100% {
-    box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.8),
-      0 0 10px 2px rgba(139, 92, 246, 0.4),
-      0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    background-position: 0% 50%;
   }
 }
 
