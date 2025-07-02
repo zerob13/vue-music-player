@@ -1,21 +1,27 @@
 {
-  "name": "vue-music-vue-tailwind4",
+  "name": "vue-music-player",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "packageManager": "pnpm@10.12.4",
   "exports": {
     ".": {
-      "types": "./dist/types/MusicPlayer.vue.d.ts",
+      "types": "./dist/types/exports.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./index.css": "./dist/index.css"
+    "./index.css": "./dist/index.css",
+    "./tailwind.css": "./dist/tailwind.css",
+    "./tailwind.safelist": "./dist/tailwind.ts"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/types/exports.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build:npm": "vite build --mode npm",
+    "build:npm": "vite build --mode npm && npm run build:tailwind",
+    "build:tailwind": "vite build --config vite.tailwind.config.ts",
     "build": "vite build",
     "dev": "vite --port 3333 --open",
     "lint": "eslint . --cache",
@@ -28,15 +34,12 @@
   "dependencies": {
     "@egoist/tailwindcss-icons": "^1.9.0",
     "@iconify-json/carbon": "^1.2.10",
-    "@iconify/tailwind": "^1.2.0",
-    "@tailwindcss/postcss": "^4.1.11",
-    "@vueuse/core": "^9.13.0",
-    "postcss": "^8.5.6",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.16.2",
+    "@tailwindcss/postcss": "^4.1.4",
     "@tailwindcss/vite": "^4.1.11",
     "@types/node": "^18.19.115",
     "@vitejs/plugin-vue": "^5.2.4",
@@ -45,6 +48,7 @@
     "bumpp": "^10.2.0",
     "eslint": "^9.30.1",
     "jsdom": "^19.0.0",
+    "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",
     "unplugin-auto-import": "^0.18.6",

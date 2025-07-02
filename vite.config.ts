@@ -1,6 +1,7 @@
-import Vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
 /// <reference types="vitest" />
 
+import Vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import UnpluginClassExtractor from 'unplugin-class-extractor/vite'
 import Components from 'unplugin-vue-components/vite'
@@ -13,6 +14,7 @@ import { name } from './package.json'
 export default defineConfig(({ mode }) => {
   const base = '/'
   let plugins = [
+    tailwindcss(),
     Vue(),
     AutoImport({
       imports: ['vue', 'vue-router'],
@@ -51,6 +53,7 @@ export default defineConfig(({ mode }) => {
       target: 'es2015',
       cssTarget: 'chrome61',
       copyPublicDir: false,
+      cssCodeSplit: false,
       lib: {
         entry: './src/components/exports.ts',
         formats: ['cjs', 'es'],
@@ -60,6 +63,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         external: ['vue'],
         output: {
+          assetFileNames: 'index.css',
           globals: {
             vue: 'Vue',
           },

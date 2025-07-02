@@ -45,9 +45,6 @@ const hasDraggedPlayer = ref(false) // 添加标记来跟踪是否真正拖拽�
 // 封面图片加载相关
 const coverImageError = ref(false)
 
-// 播放模式：sequence 顺序播放，loop 单曲循环，random 随机播放
-const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
-
 // 默认的音乐封面SVG占位图
 const defaultCoverSvg = `data:image/svg+xml;base64,${btoa(`
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
@@ -755,6 +752,9 @@ function startResizing(event: MouseEvent) {
   document.addEventListener('mouseup', stopResize)
   event.preventDefault()
 }
+
+// 播放模式：sequence 顺序播放，loop 单曲循环，random 随机播放
+const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
 
 const playModeIcon = computed(() => {
   switch (playMode.value) {
