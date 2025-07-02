@@ -21,7 +21,7 @@
     "lint": "eslint . --cache",
     "lint:fix": "pnpm run lint --fix",
     "typecheck": "vue-tsc --noEmit",
-    "preview": "vite preview --port 3332",
+    "preview": "vite preview",
     "test": "vitest"
   },
   "dependencies": {
