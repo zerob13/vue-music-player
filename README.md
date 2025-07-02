@@ -1,12 +1,12 @@
 <div align="center">
-  <img src="./public/logo.svg" alt="Vue Music Player Logo" width="120" height="120">
+  <img src="./public/kv.png" alt="Vue Music Player Logo" width="120" height="120">
 
   # Vue Music Player
 
   *一个精美的Vue3音乐播放器组件，支持现代化UI设计、丰富动画效果和完整的播放功能。*
 
-  [![NPM Version](https://img.shields.io/npm/v/vue-music-vue-tailwind4?color=8b5cf6&style=flat-square)](https://www.npmjs.com/package/vue-music-vue-tailwind4)
-  [![License](https://img.shields.io/npm/l/vue-music-vue-tailwind4?color=ec4899&style=flat-square)](./license)
+  [![NPM Version](https://img.shields.io/npm/v/vue3-music-player?color=8b5cf6&style=flat-square)](https://www.npmjs.com/package/vue3-music-player)
+  [![License](https://img.shields.io/npm/l/vue3-music-player?color=ec4899&style=flat-square)](./license)
   [![Vue 3](https://img.shields.io/badge/Vue-3.x-4fc08d?style=flat-square&logo=vue.js)](https://vuejs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 </div>
@@ -160,8 +160,8 @@ const playlist = ref<Song[]>([
 ### 作为Vue组件使用
 ```vue
 <script setup>
-import type { Song } from 'vue-music-vue-tailwind4'
-import { MusicPlayer } from 'vue-music-vue-tailwind4'
+import type { Song } from 'vue3-music-player'
+import { MusicPlayer } from 'vue3-music-player'
 
 // 准备播放列表数据
 const playlist: Song[] = [
