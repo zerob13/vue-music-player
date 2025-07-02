@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Song } from './type'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import svg from '../../public/favicon.svg?raw'
 
 const props = defineProps({
   playlist: {
@@ -38,6 +39,9 @@ const volumeBeforeMute = ref(0.7) // 静音前的音量
 const isDraggingPlayer = ref(false)
 const isResizing = ref(false)
 const playerPosition = ref({ x: 50, y: 50 }) // 设置一个安全的初始位置
+
+// 位置记忆相关的状态
+const miniPosition = ref({ x: 0, y: 0 }) // mini模式的位置
 const playerSize = ref({ width: 320, height: 'auto' })
 const dragOffset = ref({ x: 0, y: 0 })
 const hasDraggedPlayer = ref(false) // 添加标记来跟踪是否真正拖拽了
@@ -45,25 +49,11 @@ const hasDraggedPlayer = ref(false) // 添加标记来跟踪是否真正拖拽�
 // 封面图片加载相关
 const coverImageError = ref(false)
 
+// 播放模式：sequence 顺序播放，loop 单曲循环，random 随机播放
+const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
+
 // 默认的音乐封面SVG占位图
-const defaultCoverSvg = `data:image/svg+xml;base64,${btoa(`
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
-  <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect width="400" height="400" fill="url(#grad1)"/>
-  <circle cx="200" cy="200" r="80" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-  <circle cx="200" cy="200" r="60" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-  <circle cx="200" cy="200" r="40" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-  <circle cx="200" cy="200" r="20" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-  <circle cx="200" cy="200" r="8" fill="rgba(255,255,255,0.8)"/>
-  <path d="M160 160 L240 160 L240 180 L220 200 L200 240 L180 200 L160 180 Z" fill="rgba(255,255,255,0.6)"/>
-  <path d="M180 170 L220 170 L220 185 L205 195 L200 220 L195 195 L180 185 Z" fill="rgba(255,255,255,0.8)"/>
-</svg>
-`)}`
+const defaultCoverSvg = `data:image/svg+xml;base64,${btoa(svg)}`
 
 // 处理封面图片加载错误
 function handleCoverImageError() {
@@ -105,7 +95,34 @@ const currentLyrics = computed(() => currentSong.value.lyrics || [])
 
 // 方法
 function toggleExpanded() {
+  if (isExpanded.value) {
+    // 当前是展开模式，要切换到mini模式
+    // 恢复到mini模式的保存位置
+    playerPosition.value = { ...miniPosition.value }
+  }
+  else {
+    // 当前是mini模式，要切换到展开模式
+    // 保存当前mini模式的位置
+    miniPosition.value = { ...playerPosition.value }
+
+    // 展开模式始终居中显示
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
+    const expandedWidth = 320 // 展开模式的宽度
+    const expandedHeight = 830 // 展开模式的高度
+
+    playerPosition.value = {
+      x: (windowWidth - expandedWidth) / 2,
+      y: (windowHeight - expandedHeight) / 2,
+    }
+  }
+
   isExpanded.value = !isExpanded.value
+
+  // 切换后检查边界
+  setTimeout(() => {
+    checkPlayerBoundaries()
+  }, 50)
 }
 
 // 处理迷你播放器点击事件 - 避免拖拽时触发切换
@@ -717,8 +734,18 @@ function stopPlayerDragging(event?: MouseEvent) {
   // 立即重置拖拽状态
   isDraggingPlayer.value = false
 
-  // 如果真正发生了拖拽，延迟重置拖拽标记
-  if (hasDraggedPlayer.value) {
+  // 如果真正发生了拖拽且是在mini模式下，记录位置
+  if (hasDraggedPlayer.value && !isExpanded.value) {
+    miniPosition.value = { ...playerPosition.value }
+
+    // 延迟重置当前拖拽标记
+    setTimeout(() => {
+      hasDraggedPlayer.value = false
+    }, 100)
+  }
+
+  // 对于展开模式，拖拽后不需要记录位置，因为下次展开仍然会居中
+  if (hasDraggedPlayer.value && isExpanded.value) {
     setTimeout(() => {
       hasDraggedPlayer.value = false
     }, 100)
@@ -752,9 +779,6 @@ function startResizing(event: MouseEvent) {
   document.addEventListener('mouseup', stopResize)
   event.preventDefault()
 }
-
-// 播放模式：sequence 顺序播放，loop 单曲循环，random 随机播放
-const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
 
 const playModeIcon = computed(() => {
   switch (playMode.value) {
@@ -885,6 +909,31 @@ onMounted(() => {
   if (audioPlayer.value) {
     audioPlayer.value.volume = volume.value
     loadCurrentSong()
+  }
+
+  // 设置默认位置
+  const windowWidth = window.innerWidth
+  const windowHeight = window.innerHeight
+
+  // mini 模式默认位置 - 右下角
+  miniPosition.value = {
+    x: windowWidth - 320 - 20, // 320px宽度 + 20px边距
+    y: windowHeight - 64 - 20, // 64px高度 + 20px边距
+  }
+
+  // 初始位置
+  if (isExpanded.value) {
+    // 展开模式居中显示
+    const expandedWidth = 400
+    const expandedHeight = 600
+    playerPosition.value = {
+      x: (windowWidth - expandedWidth) / 2,
+      y: (windowHeight - expandedHeight) / 2,
+    }
+  }
+  else {
+    // mini模式使用默认位置
+    playerPosition.value = { ...miniPosition.value }
   }
 
   // 初始化边界检查

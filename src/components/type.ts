@@ -15,28 +15,28 @@ export interface LyricLine {
 export interface MusicPlayerProps {
   // 基础配置
   playlist: Song[]
-  
+
   // 位置和大小配置
-  initialPosition?: { x: number; y: number } | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center'
-  initialSize?: { width: number; height?: number | 'auto' }
+  initialPosition?: { x: number, y: number } | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center'
+  initialSize?: { width: number, height?: number | 'auto' }
   initialExpanded?: boolean
-  
+
   // 播放配置
   initialVolume?: number // 0-1
   initialPlayMode?: 'sequence' | 'loop' | 'random'
   autoPlay?: boolean
-  
+
   // 显示配置
   showLyrics?: boolean
   showPlayModeButton?: boolean
   showVolumeControl?: boolean
-  
+
   // 交互配置
   draggable?: boolean
   resizable?: boolean
   boundaryCheck?: boolean
   positionMargin?: number
-  
+
   // 样式配置
   theme?: 'default' | 'purple' | 'blue' | 'green' | 'orange'
   playerStyle?: 'modern' | 'classic' | 'minimal'
