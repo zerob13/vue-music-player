@@ -22,7 +22,8 @@
     "lint:fix": "pnpm run lint --fix",
     "typecheck": "vue-tsc --noEmit",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "release": "bumpp --commit --push --tag && npm publish"
   },
   "dependencies": {
     "@egoist/tailwindcss-icons": "^1.9.0",
@@ -41,6 +42,7 @@
     "@vitejs/plugin-vue": "^5.2.4",
     "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.21",
+    "bumpp": "^10.2.0",
     "eslint": "^9.30.1",
     "jsdom": "^19.0.0",
     "tailwindcss": "^4.1.11",
