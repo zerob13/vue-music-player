@@ -146,17 +146,73 @@ async function togglePlay() {
 }
 
 function nextSong() {
+  if (playMode.value === 'loop') {
+    // 单曲循环模式下，点击下一首应该重新播放当前歌曲
+    if (audioPlayer.value) {
+      audioPlayer.value.currentTime = 0
+      if (isPlaying.value) {
+        audioPlayer.value.play().catch(error => {
+          console.error('重新播放失败:', error)
+        })
+      }
+    }
+    return
+  }
+  
+  if (playMode.value === 'random') {
+    // 随机播放，不能和当前一样
+    let next = Math.floor(Math.random() * props.playlist.length)
+    if (props.playlist.length > 1) {
+      while (next === currentIndex.value) {
+        next = Math.floor(Math.random() * props.playlist.length)
+      }
+    }
+    currentIndex.value = next
+    loadCurrentSong()
+    return
+  }
+  
+  // 顺序播放模式
   if (currentIndex.value < props.playlist.length - 1) {
     currentIndex.value++
     loadCurrentSong()
   }
+  // 顺序播放到最后一首就不再继续
 }
 
 function previousSong() {
+  if (playMode.value === 'loop') {
+    // 单曲循环模式下，点击上一首应该重新播放当前歌曲
+    if (audioPlayer.value) {
+      audioPlayer.value.currentTime = 0
+      if (isPlaying.value) {
+        audioPlayer.value.play().catch(error => {
+          console.error('重新播放失败:', error)
+        })
+      }
+    }
+    return
+  }
+  
+  if (playMode.value === 'random') {
+    // 随机播放时，上一首也随机选择
+    let prev = Math.floor(Math.random() * props.playlist.length)
+    if (props.playlist.length > 1) {
+      while (prev === currentIndex.value) {
+        prev = Math.floor(Math.random() * props.playlist.length)
+      }
+    }
+    currentIndex.value = prev
+    loadCurrentSong()
+    return
+  }
+  
+  // 顺序播放模式
   if (currentIndex.value > 0) {
     currentIndex.value--
     loadCurrentSong()
   }
+  // 顺序播放到第一首就不再继续
 }
 
 // 自动跳过有错误的歌曲
@@ -394,10 +450,26 @@ function onTimeUpdate() {
 }
 
 function onSongEnd() {
+  if (playMode.value === 'loop') {
+    // 单曲循环 - 重置到开头继续播放
+    if (audioPlayer.value) {
+      audioPlayer.value.currentTime = 0
+      audioPlayer.value.play().catch(error => {
+        console.error('单曲循环播放失败:', error)
+        hasError.value = true
+        errorMessage.value = `播放失败: ${currentSong.value.title}`
+        isPlaying.value = false
+      })
+    }
+    return
+  }
+  if (playMode.value === 'random') {
+    nextSong()
+    return
+  }
   if (currentIndex.value < props.playlist.length - 1) {
     nextSong()
-  }
-  else {
+  } else {
     isPlaying.value = false
   }
 }
@@ -680,6 +752,35 @@ function startResizing(event: MouseEvent) {
   event.preventDefault()
 }
 
+// 播放模式：sequence 顺序播放，loop 单曲循环，random 随机播放
+const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
+
+const playModeIcon = computed(() => {
+  switch (playMode.value) {
+    case 'loop':
+      return 'i-carbon-repeat-one';
+    case 'random':
+      return 'i-carbon-shuffle';
+    default:
+      return 'i-carbon-repeat';
+  }
+})
+const playModeText = computed(() => {
+  switch (playMode.value) {
+    case 'loop':
+      return '单曲循环';
+    case 'random':
+      return '随机播放';
+    default:
+      return '顺序播放';
+  }
+})
+function togglePlayMode() {
+  if (playMode.value === 'sequence') playMode.value = 'loop';
+  else if (playMode.value === 'loop') playMode.value = 'random';
+  else playMode.value = 'sequence';
+}
+
 // 边界检查函数
 function checkPlayerBoundaries() {
   // 如果正在拖拽或调整大小，不进行边界检查
@@ -904,7 +1005,15 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
-
+        <!-- 播放模式按钮 -->
+        <button 
+          class="playmode-btn" 
+          :class="{ active: playMode !== 'sequence' }"
+          :title="playModeText" 
+          @click="togglePlayMode"
+        >
+          <i :class="[playModeIcon, 'text-base']" />
+        </button>
         <!-- 右上角关闭按钮 -->
         <button class="close-btn" @click="toggleExpanded">
           <i class="i-carbon-close text-lg" />
@@ -1031,7 +1140,7 @@ onUnmounted(() => {
       <div class="controls">
         <button
           class="control-btn"
-          :disabled="currentIndex === 0"
+          :disabled="playMode === 'sequence' && currentIndex === 0"
           @click="previousSong"
         >
           <i class="i-carbon-skip-back-filled text-2xl" />
@@ -1050,7 +1159,7 @@ onUnmounted(() => {
 
         <button
           class="control-btn"
-          :disabled="currentIndex === playlist.length - 1"
+          :disabled="playMode === 'sequence' && currentIndex === playlist.length - 1"
           @click="nextSong"
         >
           <i class="i-carbon-skip-forward-filled text-2xl" />
@@ -2115,5 +2224,49 @@ onUnmounted(() => {
 
 .lyrics-container::-webkit-scrollbar-thumb:hover {
   background: rgba(139, 92, 246, 0.6);
+}
+
+.playmode-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(107, 114, 128, 0.1);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+}
+
+.playmode-btn:hover {
+  background: rgba(107, 114, 128, 0.2);
+  transform: scale(1.1);
+  color: #374151;
+}
+
+.playmode-btn.active {
+  background: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.dark .playmode-btn {
+  background: rgba(156, 163, 175, 0.08);
+  color: #9ca3af;
+}
+
+.dark .playmode-btn:hover {
+  background: rgba(156, 163, 175, 0.12);
+  color: #f9fafb;
+}
+
+.dark .playmode-btn.active {
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+  border-color: rgba(168, 85, 247, 0.25);
 }
 </style>
