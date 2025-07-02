@@ -7,7 +7,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: false,
     rollupOptions: {
-      input: './src/styles/tailwind-only.css',
+      input: './src/styles/tailwind.css',
       output: {
         assetFileNames: 'tailwind.css',
       },

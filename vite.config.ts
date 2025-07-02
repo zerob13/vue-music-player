@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
 
   if (mode === 'npm') {
     plugins = [
+      tailwindcss(), // 添加 tailwindcss 插件以确保图标样式被正确处理
       Vue(),
       AutoImport({
         imports: ['vue', 'vue-router'],

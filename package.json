@@ -20,7 +20,7 @@
     "dist"
   ],
   "scripts": {
-    "build:npm": "vite build --mode npm && npm run build:tailwind",
+    "build:npm": "vite build --mode npm && pnpm run build:tailwind",
     "build:tailwind": "vite build --config vite.tailwind.config.ts",
     "build": "vite build",
     "dev": "vite --port 3333 --open",
