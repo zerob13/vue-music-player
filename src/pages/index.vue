@@ -36,7 +36,13 @@ const playlist = ref<Song[]>([
       </div>
 
       <!-- 音乐播放器 -->
-      <MusicPlayer :playlist="playlist" />
+      <!-- 默认右下角位置 -->
+      <MusicPlayer
+        :playlist="playlist"
+      />
+
+      <!-- 或者指定初始位置 -->
+      <!-- <MusicPlayer :playlist="playlist" :initial-position="{ x: 100, y: 100 }" /> -->
     </div>
   </div>
 </template>

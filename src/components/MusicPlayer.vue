@@ -8,6 +8,10 @@ const props = defineProps({
     type: Array as () => Song[],
     required: true,
   },
+  initialPosition: {
+    type: Object as () => { x?: number, y?: number },
+    default: () => ({}),
+  },
 })
 
 // 响应式数据
@@ -660,7 +664,7 @@ function startPlayerDragging(event: MouseEvent) {
   // 阻止在可交互元素上开始拖拽
   const target = event.target as HTMLElement
   const interactiveElements = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'A']
-  const hasInteractiveClass = target.closest('.progress-bar, .volume-slider-container, .volume-controls, .lyrics-line, .resize-handle, .volume-btn, .close-btn')
+  const hasInteractiveClass = target.closest('.progress-bar, .volume-slider-container, .volume-controls, .lyrics-line, .volume-btn, .close-btn')
 
   if (interactiveElements.includes(target.tagName) || hasInteractiveClass) {
     return
@@ -754,30 +758,6 @@ function stopPlayerDragging(event?: MouseEvent) {
   if (event) {
     event.preventDefault()
   }
-}
-
-// 播放器缩放功能
-function startResizing(event: MouseEvent) {
-  isResizing.value = true
-  const startX = event.clientX
-  const startWidth = playerSize.value.width
-
-  const onResize = (e: MouseEvent) => {
-    if (!isResizing.value)
-      return
-    const newWidth = Math.max(280, Math.min(500, startWidth + (e.clientX - startX)))
-    playerSize.value.width = newWidth
-  }
-
-  const stopResize = () => {
-    isResizing.value = false
-    document.removeEventListener('mousemove', onResize)
-    document.removeEventListener('mouseup', stopResize)
-  }
-
-  document.addEventListener('mousemove', onResize)
-  document.addEventListener('mouseup', stopResize)
-  event.preventDefault()
 }
 
 const playModeIcon = computed(() => {
@@ -915,10 +895,16 @@ onMounted(() => {
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
 
-  // mini 模式默认位置 - 右下角
-  miniPosition.value = {
+  // 计算默认的右下角位置
+  const defaultMiniPosition = {
     x: windowWidth - 320 - 20, // 320px宽度 + 20px边距
     y: windowHeight - 64 - 20, // 64px高度 + 20px边距
+  }
+
+  // mini 模式位置 - 支持从 props 传入，否则使用右下角默认位置
+  miniPosition.value = {
+    x: props.initialPosition.x ?? defaultMiniPosition.x,
+    y: props.initialPosition.y ?? defaultMiniPosition.y,
   }
 
   // 初始位置
@@ -932,7 +918,7 @@ onMounted(() => {
     }
   }
   else {
-    // mini模式使用默认位置
+    // mini模式使用设定的位置
     playerPosition.value = { ...miniPosition.value }
   }
 
@@ -976,12 +962,6 @@ onUnmounted(() => {
     }"
     @mousedown="startPlayerDragging"
   >
-    <!-- 缩放手柄 -->
-    <div
-      v-if="isExpanded"
-      class="resize-handle"
-      @mousedown="startResizing"
-    />
     <!-- 流线型边框效果 -->
     <!-- 流线型边框效果 - 现在通过CSS伪元素实现 -->
 
@@ -990,32 +970,42 @@ onUnmounted(() => {
 
     <!-- 迷你模式 -->
     <div v-if="!isExpanded" class="mini-player" @click="handleMiniPlayerClick">
-      <div class="mini-cover">
-        <img
-          :src="currentCover"
-          :alt="currentSong.title"
-          class="cover-image"
-          :class="{ playing: isPlaying }"
-          @error="handleCoverImageError"
-        >
+      <div class="mini-left">
+        <div class="mini-cover">
+          <img
+            :src="currentCover"
+            :alt="currentSong.title"
+            class="cover-image"
+            :class="{ playing: isPlaying }"
+            @error="handleCoverImageError"
+          >
+        </div>
+        <div class="mini-info">
+          <div class="mini-title">
+            {{ currentSong.title }}
+          </div>
+          <div class="mini-artist">
+            {{ currentSong.artist }}
+          </div>
+          <div v-if="hasError" class="mini-error">
+            <i class="i-carbon-warning-alt text-xs" />
+            <span>播放失败</span>
+          </div>
+        </div>
       </div>
-      <div class="mini-info">
-        <div class="mini-title">
-          {{ currentSong.title }}
-        </div>
-        <div class="mini-artist">
-          {{ currentSong.artist }}
-        </div>
-        <div v-if="hasError" class="mini-error">
-          <i class="i-carbon-warning-alt text-xs" />
-          <span>播放失败</span>
-        </div>
+      <div class="mini-controls">
+        <button class="mini-control-btn mini-prev-btn" title="上一首" @click.stop="previousSong">
+          <i class="i-carbon-skip-back" />
+        </button>
+        <button class="mini-play-btn" :disabled="isLoading || hasError" :class="{ error: hasError, playing: isPlaying }" @click.stop="togglePlay">
+          <i v-if="isLoading" class="i-carbon-restart animate-spin play-icon" />
+          <i v-else-if="hasError" class="i-carbon-warning play-icon" />
+          <i v-else :class="isPlaying ? 'i-carbon-pause-filled' : 'i-carbon-play-filled'" class="play-icon" />
+        </button>
+        <button class="mini-control-btn mini-next-btn" title="下一首" @click.stop="nextSong">
+          <i class="i-carbon-skip-forward" />
+        </button>
       </div>
-      <button class="mini-play-btn" :disabled="isLoading || hasError" :class="{ error: hasError }" @click.stop="togglePlay">
-        <i v-if="isLoading" class="i-carbon-restart text-lg animate-spin" />
-        <i v-else-if="hasError" class="i-carbon-warning text-lg" />
-        <i v-else :class="isPlaying ? 'i-carbon-pause-filled' : 'i-carbon-play-filled'" class="text-lg" />
-      </button>
     </div>
 
     <!-- 完整模式 -->
@@ -1277,40 +1267,6 @@ onUnmounted(() => {
   border-radius: 1.5rem;
 }
 
-/* 缩放手柄 */
-.resize-handle {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 1rem;
-  height: 1rem;
-  cursor: nw-resize;
-  z-index: 100;
-}
-
-.resize-handle::before {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-bottom: 8px solid rgba(107, 114, 128, 0.3);
-}
-
-.resize-handle:hover::before {
-  border-bottom-color: rgba(107, 114, 128, 0.5);
-}
-
-.dark .resize-handle::before {
-  border-bottom-color: rgba(156, 163, 175, 0.3);
-}
-
-.dark .resize-handle:hover::before {
-  border-bottom-color: rgba(156, 163, 175, 0.5);
-}
-
 /* 播放时的流动边框动画 - 使用双伪元素实现边框裁剪 */
 .music-player.playing::before {
   content: '';
@@ -1387,14 +1343,25 @@ onUnmounted(() => {
 .mini-player {
   display: flex;
   align-items: center;
-  padding: 0.75rem;
+  justify-content: space-between;
+  padding: 0.875rem;
   height: 100%;
-  cursor: pointer;
+  cursor: move; /* 默认为移动光标 */
   transition: all 0.3s ease;
   position: relative;
   z-index: 20;
   opacity: 1;
   transform: translateY(0);
+  gap: 1rem;
+}
+
+.mini-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 0.75rem;
+  cursor: pointer; /* 点击展开的区域 */
 }
 
 .music-player.expanded .mini-player {
@@ -1411,6 +1378,7 @@ onUnmounted(() => {
   padding: 1.5rem;
   position: relative;
   z-index: 20;
+  cursor: move; /* 默认为拖拽光标 */
 }
 
 .music-player.expanded .expanded-content {
@@ -1432,20 +1400,42 @@ onUnmounted(() => {
 }
 
 .mini-player:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 
 .dark .mini-player:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mini-player:hover .mini-controls {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.02);
+}
+
+.dark .mini-player:hover .mini-controls {
+  background: rgba(0, 0, 0, 0.25);
 }
 
 .mini-cover {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3rem;
+  height: 3rem;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer; /* 点击展开 */
+}
+
+.mini-cover:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dark .mini-cover {
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .mini-cover img {
@@ -1468,11 +1458,13 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   margin-bottom: 1.5rem;
+  cursor: default; /* 阻止继承拖拽光标 */
 }
 
 .song-info {
   text-align: center;
   margin-bottom: 1.5rem;
+  cursor: default; /* 阻止继承拖拽光标 */
 }
 
 .song-title {
@@ -1578,6 +1570,7 @@ onUnmounted(() => {
 
 .progress-section {
   margin-bottom: 1.5rem;
+  cursor: default; /* 阻止继承拖拽光标 */
 }
 
 .time-display {
@@ -1599,6 +1592,7 @@ onUnmounted(() => {
   gap: 1.5rem;
   margin-bottom: 1.5rem;
   height: 4rem; /* 确保容器有固定高度 */
+  cursor: default; /* 阻止继承拖拽光标 */
 }
 
 .control-btn {
@@ -1867,20 +1861,25 @@ onUnmounted(() => {
 
 .mini-info {
   flex: 1;
-  margin: 0 0.75rem;
   min-width: 0;
   line-height: 1.2;
+  cursor: pointer; /* 点击展开 */
 }
 
 .mini-title {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: #1f2937;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: 0.125rem;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  transition: color 0.2s ease;
+}
+
+.mini-player:hover .mini-title {
+  color: #111827;
 }
 
 .dark .mini-title {
@@ -1888,19 +1887,32 @@ onUnmounted(() => {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
+.dark .mini-player:hover .mini-title {
+  color: #ffffff;
+}
+
 .mini-artist {
   font-size: 0.75rem;
-  color: #4b5563;
+  color: #6b7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+  transition: color 0.2s ease;
+}
+
+.mini-player:hover .mini-artist {
+  color: #4b5563;
 }
 
 .dark .mini-artist {
+  color: #9ca3af;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.dark .mini-player:hover .mini-artist {
   color: #d1d5db;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .mini-error {
@@ -1918,24 +1930,184 @@ onUnmounted(() => {
 }
 
 .mini-play-btn {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 50%;
-  background: linear-gradient(to right, #8b5cf6, #ec4899);
-  border: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  box-shadow:
+    0 8px 32px rgba(102, 126, 234, 0.4),
+    0 4px 16px rgba(118, 75, 162, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-size: 1.125rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.mini-play-btn::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .mini-play-btn:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow:
+    0 16px 40px rgba(102, 126, 234, 0.5),
+    0 8px 24px rgba(118, 75, 162, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.mini-play-btn:hover::before {
+  opacity: 0.6;
+}
+
+.mini-play-btn:active {
+  transform: scale(0.96) translateY(0);
+  transition: all 0.1s ease;
+}
+
+.mini-play-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mini-play-btn.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow:
+    0 8px 32px rgba(239, 68, 68, 0.4),
+    0 4px 16px rgba(220, 38, 38, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.mini-play-btn.playing {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.mini-play-btn.playing::before {
+  opacity: 0.8;
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+.play-icon {
+  font-size: 1.25rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  transition: all 0.2s ease;
+}
+
+.mini-play-btn:hover .play-icon {
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow:
+      0 8px 32px rgba(102, 126, 234, 0.4),
+      0 4px 16px rgba(118, 75, 162, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 12px 40px rgba(102, 126, 234, 0.6),
+      0 6px 24px rgba(118, 75, 162, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+
+/* 迷你播放器控制按钮组 */
+.mini-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+  padding: 0.25rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: default; /* 阻止继承父级的 move cursor */
+}
+
+.dark .mini-controls {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mini-control-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  font-size: 0.875rem;
+}
+
+.mini-control-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #1f2937;
+  transform: scale(1.05);
+}
+
+.mini-control-btn:active {
+  transform: scale(0.95);
+}
+
+.dark .mini-control-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+}
+
+.dark .mini-control-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #f9fafb;
+}
+
+/* 特殊样式调整 */
+.mini-prev-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+}
+
+.mini-next-btn:hover {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2));
 }
 
 /* 关闭按钮 */
@@ -1945,6 +2117,7 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 1.5rem;
   position: relative;
+  cursor: default; /* 阻止继承拖拽光标 */
 }
 
 .close-btn {
@@ -2092,6 +2265,7 @@ onUnmounted(() => {
   /* 防止内容变化时的跳动 */
   contain: layout style;
   will-change: auto;
+  cursor: default; /* 阻止继承拖拽光标 */
 }
 
 .lyrics-header {
@@ -2224,6 +2398,7 @@ onUnmounted(() => {
 .lyrics-toggle-mini {
   margin: 0.75rem 0;
   text-align: center;
+  cursor: default; /* 阻止继承拖拽光标 */
 }
 
 .lyrics-toggle-btn {
