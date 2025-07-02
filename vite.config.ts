@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
       Components(),
       dts({
         outDir: 'dist/types',
-        include:['src/components/**/*'],
+        include: ['src/components/**/*'],
       }),
       UnpluginClassExtractor({
         output: 'dist/tailwind.ts',

@@ -149,8 +149,8 @@ const playlist = ref<Song[]>([
 ### 作为Vue组件使用
 ```vue
 <script setup>
-import { MusicPlayer } from 'vue-music-vue-tailwind4'
 import type { Song } from 'vue-music-vue-tailwind4'
+import { MusicPlayer } from 'vue-music-vue-tailwind4'
 
 // 准备播放列表数据
 const playlist: Song[] = [
@@ -179,7 +179,7 @@ const playlist: Song[] = [
 #### 基础控制
 - **播放/暂停**: 点击中央的播放按钮
 - **切换歌曲**: 使用左右箭头按钮或键盘方向键
-- **音量调节**: 
+- **音量调节**:
   - 悬停在音量图标上显示音量滑块
   - 拖拽滑块或点击任意位置调节音量
   - 点击音量图标快速静音/取消静音

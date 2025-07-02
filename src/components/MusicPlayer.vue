@@ -45,6 +45,9 @@ const hasDraggedPlayer = ref(false) // 添加标记来跟踪是否真正拖拽�
 // 封面图片加载相关
 const coverImageError = ref(false)
 
+// 播放模式：sequence 顺序播放，loop 单曲循环，random 随机播放
+const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
+
 // 默认的音乐封面SVG占位图
 const defaultCoverSvg = `data:image/svg+xml;base64,${btoa(`
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
@@ -151,14 +154,14 @@ function nextSong() {
     if (audioPlayer.value) {
       audioPlayer.value.currentTime = 0
       if (isPlaying.value) {
-        audioPlayer.value.play().catch(error => {
+        audioPlayer.value.play().catch((error) => {
           console.error('重新播放失败:', error)
         })
       }
     }
     return
   }
-  
+
   if (playMode.value === 'random') {
     // 随机播放，不能和当前一样
     let next = Math.floor(Math.random() * props.playlist.length)
@@ -171,7 +174,7 @@ function nextSong() {
     loadCurrentSong()
     return
   }
-  
+
   // 顺序播放模式
   if (currentIndex.value < props.playlist.length - 1) {
     currentIndex.value++
@@ -186,14 +189,14 @@ function previousSong() {
     if (audioPlayer.value) {
       audioPlayer.value.currentTime = 0
       if (isPlaying.value) {
-        audioPlayer.value.play().catch(error => {
+        audioPlayer.value.play().catch((error) => {
           console.error('重新播放失败:', error)
         })
       }
     }
     return
   }
-  
+
   if (playMode.value === 'random') {
     // 随机播放时，上一首也随机选择
     let prev = Math.floor(Math.random() * props.playlist.length)
@@ -206,7 +209,7 @@ function previousSong() {
     loadCurrentSong()
     return
   }
-  
+
   // 顺序播放模式
   if (currentIndex.value > 0) {
     currentIndex.value--
@@ -454,7 +457,7 @@ function onSongEnd() {
     // 单曲循环 - 重置到开头继续播放
     if (audioPlayer.value) {
       audioPlayer.value.currentTime = 0
-      audioPlayer.value.play().catch(error => {
+      audioPlayer.value.play().catch((error) => {
         console.error('单曲循环播放失败:', error)
         hasError.value = true
         errorMessage.value = `播放失败: ${currentSong.value.title}`
@@ -469,7 +472,8 @@ function onSongEnd() {
   }
   if (currentIndex.value < props.playlist.length - 1) {
     nextSong()
-  } else {
+  }
+  else {
     isPlaying.value = false
   }
 }
@@ -752,33 +756,32 @@ function startResizing(event: MouseEvent) {
   event.preventDefault()
 }
 
-// 播放模式：sequence 顺序播放，loop 单曲循环，random 随机播放
-const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
-
 const playModeIcon = computed(() => {
   switch (playMode.value) {
     case 'loop':
-      return 'i-carbon-repeat-one';
+      return 'i-carbon-repeat-one'
     case 'random':
-      return 'i-carbon-shuffle';
+      return 'i-carbon-shuffle'
     default:
-      return 'i-carbon-repeat';
+      return 'i-carbon-repeat'
   }
 })
 const playModeText = computed(() => {
   switch (playMode.value) {
     case 'loop':
-      return '单曲循环';
+      return '单曲循环'
     case 'random':
-      return '随机播放';
+      return '随机播放'
     default:
-      return '顺序播放';
+      return '顺序播放'
   }
 })
 function togglePlayMode() {
-  if (playMode.value === 'sequence') playMode.value = 'loop';
-  else if (playMode.value === 'loop') playMode.value = 'random';
-  else playMode.value = 'sequence';
+  if (playMode.value === 'sequence')
+    playMode.value = 'loop'
+  else if (playMode.value === 'loop')
+    playMode.value = 'random'
+  else playMode.value = 'sequence'
 }
 
 // 边界检查函数
@@ -1006,13 +1009,13 @@ onUnmounted(() => {
           </div>
         </div>
         <!-- 播放模式按钮 -->
-        <button 
-          class="playmode-btn" 
+        <button
+          class="playmode-btn"
           :class="{ active: playMode !== 'sequence' }"
-          :title="playModeText" 
+          :title="playModeText"
           @click="togglePlayMode"
         >
-          <i :class="[playModeIcon, 'text-base']" />
+          <i class="text-base" :class="[playModeIcon]" />
         </button>
         <!-- 右上角关闭按钮 -->
         <button class="close-btn" @click="toggleExpanded">
