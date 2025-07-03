@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.16.2",
+    "@simon_he/git-fork-vue": "^0.0.18",
     "@tailwindcss/postcss": "^4.1.4",
     "@tailwindcss/vite": "^4.1.11",
     "@types/node": "^18.19.115",

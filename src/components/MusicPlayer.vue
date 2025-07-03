@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Song } from './type'
-import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   playlist: {
@@ -126,7 +126,7 @@ function toggleExpanded() {
   setTimeout(() => {
     checkPlayerBoundaries()
   }, 50)
-  
+
   // 如果切换到展开模式且歌词是显示的，需要滚动到当前歌词位置
   if (isExpanded.value && showLyrics.value) {
     nextTick(() => {
@@ -589,7 +589,7 @@ function stopDragging() {
 // 歌词相关功能
 function toggleLyrics() {
   showLyrics.value = !showLyrics.value
-  
+
   // 如果展开歌词，需要在下一帧重新滚动到当前位置
   if (showLyrics.value) {
     nextTick(() => {
@@ -670,10 +670,10 @@ function scrollToCurrentLyric() {
       const lineTop = activeLine.offsetTop
       const lineHeight = activeLine.offsetHeight
       const containerHeight = container.clientHeight
-      
+
       // 计算目标滚动位置，让当前行在容器中央
       const targetScrollTop = lineTop - containerHeight / 2 + lineHeight / 2
-      
+
       container.scrollTo({
         top: Math.max(0, targetScrollTop),
         behavior: 'smooth',
