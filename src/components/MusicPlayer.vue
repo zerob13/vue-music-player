@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Song } from './type'
-import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   playlist: {
@@ -126,7 +126,7 @@ function toggleExpanded() {
   setTimeout(() => {
     checkPlayerBoundaries()
   }, 50)
-  
+
   // 如果切换到展开模式且歌词是显示的，需要滚动到当前歌词位置
   if (isExpanded.value && showLyrics.value) {
     nextTick(() => {
@@ -589,7 +589,7 @@ function stopDragging() {
 // 歌词相关功能
 function toggleLyrics() {
   showLyrics.value = !showLyrics.value
-  
+
   // 如果展开歌词，需要在下一帧重新滚动到当前位置
   if (showLyrics.value) {
     nextTick(() => {
@@ -670,10 +670,10 @@ function scrollToCurrentLyric() {
       const lineTop = activeLine.offsetTop
       const lineHeight = activeLine.offsetHeight
       const containerHeight = container.clientHeight
-      
+
       // 计算目标滚动位置，让当前行在容器中央
       const targetScrollTop = lineTop - containerHeight / 2 + lineHeight / 2
-      
+
       container.scrollTo({
         top: Math.max(0, targetScrollTop),
         behavior: 'smooth',
@@ -1289,44 +1289,41 @@ defineExpose({
         </div>
       </div>
 
-      <!-- 歌词显示 -->
-      <div v-if="showLyrics" class="lyrics-section">
-        <div class="lyrics-header">
-          <h4 class="lyrics-title">
-            <i class="i-carbon-microphone text-sm" />
-            歌词
-          </h4>
-          <button class="lyrics-toggle" @click="toggleLyrics">
-            <i class="i-carbon-chevron-up text-sm" />
-          </button>
-        </div>
-        <div ref="lyricsContainer" class="lyrics-container">
-          <div
-            v-for="(line, index) in currentLyrics"
-            :key="index"
-            class="lyrics-line"
-            :class="{
-              active: index === currentLyricIndex,
-              passed: index < currentLyricIndex,
-            }"
-            @click="seekToLyricTime(line.time)"
-          >
-            {{ line.words }}
-          </div>
-          <div v-if="currentLyrics.length === 0" class="no-lyrics">
-            <i class="i-carbon-music text-2xl opacity-50" />
-            <p>暂无歌词</p>
-          </div>
-        </div>
+      <!-- 歌词切换按钮 -->
+      <div v-if="showLyrics" class="lyrics-header">
+        <h4 class="lyrics-title">
+          <i class="i-carbon-microphone text-sm" />
+          歌词
+        </h4>
+        <button class="lyrics-toggle" @click="toggleLyrics">
+          <i class="i-carbon-chevron-up text-sm" />
+        </button>
       </div>
-
-      <!-- 歌词切换按钮（收起状态） -->
       <div v-else class="lyrics-toggle-mini">
         <button class="lyrics-toggle-btn" @click="toggleLyrics">
           <i class="i-carbon-microphone text-sm" />
           <span>显示歌词</span>
           <i class="i-carbon-chevron-down text-sm" />
         </button>
+      </div>
+
+      <div v-if="showLyrics" ref="lyricsContainer" class="lyrics-container">
+        <div
+          v-for="(line, index) in currentLyrics"
+          :key="index"
+          class="lyrics-line"
+          :class="{
+            active: index === currentLyricIndex,
+            passed: index < currentLyricIndex,
+          }"
+          @click="seekToLyricTime(line.time)"
+        >
+          {{ line.words }}
+        </div>
+        <div v-if="currentLyrics.length === 0" class="no-lyrics">
+          <i class="i-carbon-music text-2xl opacity-50" />
+          <p>暂无歌词</p>
+        </div>
       </div>
 
       <!-- 进度条 -->
@@ -1562,6 +1559,8 @@ defineExpose({
 
 /* 完整模式内容 */
 .expanded-content {
+  display: flex;
+  flex-direction: column;
   opacity: 0;
   transform: translateY(10px);
   transition: all 0.4s ease;
@@ -1780,7 +1779,7 @@ defineExpose({
   justify-content: center;
   align-items: center;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   height: 4rem; /* 确保容器有固定高度 */
   cursor: default; /* 阻止继承拖拽光标 */
 }
@@ -2449,7 +2448,8 @@ defineExpose({
 
 /* 歌词显示区域样式 */
 .lyrics-section {
-  margin: 1rem 0;
+  flex: 1;
+  flex-shrink: 0;
   border-radius: 0.75rem;
   overflow: hidden;
   /* 防止内容变化时的跳动 */
@@ -2462,7 +2462,7 @@ defineExpose({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0;
+  height: 2.5rem;
   margin-bottom: 0.5rem;
 }
 
@@ -2510,9 +2510,11 @@ defineExpose({
 }
 
 .lyrics-container {
-  max-height: 200px;
+  /* 所有已有元素的高度 +  */
+  max-height: calc(100vh - 39.5rem);
   overflow-y: auto;
   padding: 0 0.25rem;
+  margin-bottom: 0.5rem;
   scroll-behavior: smooth;
   /* 添加更稳定的滚动 */
   scrollbar-width: thin;
@@ -2586,7 +2588,7 @@ defineExpose({
 }
 
 .lyrics-toggle-mini {
-  margin: 0.75rem 0;
+  margin-bottom: 0.5rem;
   text-align: center;
   cursor: default; /* 阻止继承拖拽光标 */
 }
@@ -2595,7 +2597,8 @@ defineExpose({
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+  height: 2.5rem;
+  padding: 0 1.25rem;
   background: rgba(107, 114, 128, 0.1);
   border: 1px solid rgba(107, 114, 128, 0.2);
   border-radius: 1.5rem;
