@@ -950,6 +950,161 @@ onUnmounted(() => {
     document.removeEventListener('click', clickHandler)
   }
 })
+
+// 暴露组件 API
+defineExpose({
+  // 播放控制 API
+  play: async () => {
+    if (!isPlaying.value) {
+      await togglePlay()
+    }
+  },
+  pause: () => {
+    if (isPlaying.value) {
+      togglePlay()
+    }
+  },
+  toggle: togglePlay,
+  stop: () => {
+    if (audioPlayer.value) {
+      audioPlayer.value.pause()
+      audioPlayer.value.currentTime = 0
+      isPlaying.value = false
+      currentTime.value = 0
+    }
+  },
+
+  // 歌曲切换 API
+  next: nextSong,
+  previous: previousSong,
+  skipTo: (index: number) => {
+    if (index >= 0 && index < props.playlist.length) {
+      currentIndex.value = index
+      loadCurrentSong()
+    }
+  },
+
+  // 进度控制 API
+  seekTo: (time: number) => {
+    if (audioPlayer.value && time >= 0 && time <= duration.value) {
+      audioPlayer.value.currentTime = time
+      currentTime.value = time
+    }
+  },
+  seekToPercentage: (percentage: number) => {
+    if (audioPlayer.value && percentage >= 0 && percentage <= 100) {
+      const time = (percentage / 100) * duration.value
+      audioPlayer.value.currentTime = time
+      currentTime.value = time
+    }
+  },
+
+  // 音量控制 API
+  setVolume: (vol: number) => {
+    const newVolume = Math.max(0, Math.min(1, vol))
+    volume.value = newVolume
+    isMuted.value = false
+    if (audioPlayer.value) {
+      audioPlayer.value.volume = newVolume
+    }
+  },
+  mute: () => {
+    if (!isMuted.value) {
+      toggleMute()
+    }
+  },
+  unmute: () => {
+    if (isMuted.value) {
+      toggleMute()
+    }
+  },
+  toggleMute,
+
+  // 播放模式 API
+  setPlayMode: (mode: 'sequence' | 'loop' | 'random') => {
+    playMode.value = mode
+  },
+  togglePlayMode,
+
+  // 界面控制 API
+  expand: () => {
+    if (!isExpanded.value) {
+      toggleExpanded()
+    }
+  },
+  collapse: () => {
+    if (isExpanded.value) {
+      toggleExpanded()
+    }
+  },
+  toggleExpanded,
+
+  // 歌词控制 API
+  showLyrics: () => {
+    if (!showLyrics.value) {
+      toggleLyrics()
+    }
+  },
+  hideLyrics: () => {
+    if (showLyrics.value) {
+      toggleLyrics()
+    }
+  },
+  toggleLyrics,
+
+  // 位置控制 API
+  setPosition: (x: number, y: number) => {
+    playerPosition.value = { x, y }
+    checkPlayerBoundaries()
+  },
+  centerPlayer: () => {
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
+    const playerWidth = isExpanded.value ? playerSize.value.width : 320
+
+    let playerHeight
+    if (isExpanded.value) {
+      playerHeight = 605
+      if (showLyrics.value) {
+        playerHeight += 225
+      }
+      if (hasError.value) {
+        playerHeight += 130
+      }
+    }
+    else {
+      playerHeight = 64
+    }
+
+    playerPosition.value = {
+      x: (windowWidth - playerWidth) / 2,
+      y: (windowHeight - playerHeight) / 2,
+    }
+  },
+
+  // 状态获取 API
+  getCurrentSong: () => currentSong.value,
+  getCurrentTime: () => currentTime.value,
+  getDuration: () => duration.value,
+  getVolume: () => volume.value,
+  getProgress: () => progressPercentage.value,
+  getPlayMode: () => playMode.value,
+  getPosition: () => ({ ...playerPosition.value }),
+
+  // 状态检查 API
+  isPlaying: () => isPlaying.value,
+  isExpanded: () => isExpanded.value,
+  isLoading: () => isLoading.value,
+  hasError: () => hasError.value,
+  isMuted: () => isMuted.value,
+  isShowingLyrics: () => showLyrics.value,
+
+  // 重新加载当前歌曲
+  reload: loadCurrentSong,
+
+  // 跳过错误歌曲
+  skipToNextPlayable: skipToNextPlayableSong,
+})
 </script>
 
 <template>

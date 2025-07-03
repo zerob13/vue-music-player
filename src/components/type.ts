@@ -53,3 +53,66 @@ export type PlayerStyle = 'modern' | 'classic' | 'minimal'
 
 // 播放模式类型
 export type PlayMode = 'sequence' | 'loop' | 'random'
+
+// 新增：音乐播放器组件 API 类型定义
+export interface MusicPlayerAPI {
+  // 播放控制 API
+  play: () => Promise<void>
+  pause: () => void
+  toggle: () => Promise<void>
+  stop: () => void
+
+  // 歌曲切换 API
+  next: () => void
+  previous: () => void
+  skipTo: (index: number) => void
+
+  // 进度控制 API
+  seekTo: (time: number) => void
+  seekToPercentage: (percentage: number) => void
+
+  // 音量控制 API
+  setVolume: (volume: number) => void
+  mute: () => void
+  unmute: () => void
+  toggleMute: () => void
+
+  // 播放模式 API
+  setPlayMode: (mode: 'sequence' | 'loop' | 'random') => void
+  togglePlayMode: () => void
+
+  // 界面控制 API
+  expand: () => void
+  collapse: () => void
+  toggleExpanded: () => void
+
+  // 歌词控制 API
+  showLyrics: () => void
+  hideLyrics: () => void
+  toggleLyrics: () => void
+
+  // 位置控制 API
+  setPosition: (x: number, y: number) => void
+  centerPlayer: () => void
+
+  // 状态获取 API
+  getCurrentSong: () => Song
+  getCurrentTime: () => number
+  getDuration: () => number
+  getVolume: () => number
+  getProgress: () => number
+  getPlayMode: () => 'sequence' | 'loop' | 'random'
+  getPosition: () => { x: number, y: number }
+
+  // 状态检查 API
+  isPlaying: () => boolean
+  isExpanded: () => boolean
+  isLoading: () => boolean
+  hasError: () => boolean
+  isMuted: () => boolean
+  isShowingLyrics: () => boolean
+
+  // 工具方法
+  reload: () => Promise<void>
+  skipToNextPlayable: () => Promise<void>
+}
