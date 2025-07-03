@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Song } from '../components/type'
+import GitForkVue from '@simon_he/git-fork-vue'
 import daoxiangLrc from '../../public/audio/daoxiang.lrc'
 import kaibuliaokouLrc from '../../public/audio/kaibuliaokou.lrc'
 import MusicPlayer from '../components/MusicPlayer.vue'
@@ -45,6 +46,13 @@ const playlist = ref<Song[]>([
       <!-- <MusicPlayer :playlist="playlist" :initial-position="{ x: 100, y: 100 }" /> -->
     </div>
   </div>
+  <GitForkVue
+    link="https://github.com/Simon-He95/vue-music-player"
+    position="right"
+    type="corners"
+    content="Star on GitHub"
+    color="#764ba2"
+  />
 </template>
 
 <style scoped>
