@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { Song } from './type'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import svg from '../../public/favicon.svg?raw'
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 
 const props = defineProps({
   playlist: {
@@ -57,7 +56,7 @@ const coverImageError = ref(false)
 const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
 
 // 默认的音乐封面SVG占位图
-const defaultCoverSvg = `data:image/svg+xml;base64,${btoa(svg)}`
+const defaultCoverSvg = '/favicon.svg'
 
 // 处理封面图片加载错误
 function handleCoverImageError() {
@@ -127,6 +126,13 @@ function toggleExpanded() {
   setTimeout(() => {
     checkPlayerBoundaries()
   }, 50)
+  
+  // 如果切换到展开模式且歌词是显示的，需要滚动到当前歌词位置
+  if (isExpanded.value && showLyrics.value) {
+    nextTick(() => {
+      scrollToCurrentLyric()
+    })
+  }
 }
 
 // 处理迷你播放器点击事件 - 避免拖拽时触发切换
@@ -583,6 +589,13 @@ function stopDragging() {
 // 歌词相关功能
 function toggleLyrics() {
   showLyrics.value = !showLyrics.value
+  
+  // 如果展开歌词，需要在下一帧重新滚动到当前位置
+  if (showLyrics.value) {
+    nextTick(() => {
+      scrollToCurrentLyric()
+    })
+  }
 }
 
 function seekToLyricTime(time: number) {
@@ -643,6 +656,28 @@ function updateCurrentLyricIndex() {
           })
         }
       }
+    }
+  }
+}
+
+// 单独的歌词滚动函数
+function scrollToCurrentLyric() {
+  const index = currentLyricIndex.value
+  if (index >= 0 && lyricsContainer.value) {
+    const activeLine = lyricsContainer.value.children[index] as HTMLElement
+    if (activeLine) {
+      const container = lyricsContainer.value
+      const lineTop = activeLine.offsetTop
+      const lineHeight = activeLine.offsetHeight
+      const containerHeight = container.clientHeight
+      
+      // 计算目标滚动位置，让当前行在容器中央
+      const targetScrollTop = lineTop - containerHeight / 2 + lineHeight / 2
+      
+      container.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: 'smooth',
+      })
     }
   }
 }
