@@ -2,7 +2,7 @@ import type { App, Plugin } from 'vue'
 
 import MusicPlayer from './MusicPlayer.vue'
 
-export type { LyricLine, MusicPlayerProps, PlayerStyle, PlayMode, PositionPreset, Song, Theme } from './type.js'
+export type { LyricLine, MusicPlayerAPI, MusicPlayerProps, PlayerStyle, PlayMode, PositionPreset, Song, Theme } from './type.js'
 
 export {
   MusicPlayer,

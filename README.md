@@ -15,7 +15,7 @@
 
 ## ✨ 特性
 
-### � 播放功能
+### 🎮 播放功能
 - **完整播放控制** - 播放/暂停、上一首/下一首、循环播放
 - **音量控制** - 音量滑块调节、静音/取消静音、悬停显示
 - **智能进度条** - 拖拽跳转、点击定位、悬停预览、缓冲显示
@@ -332,3 +332,178 @@ const playlist: Song[] = [
     <img src="https://cdn.jsdelivr.net/gh/Simon-He95/sponsor/sponsors_circle.svg"/>
   </a>
 </p>
+
+## 组件 API
+
+MusicPlayer 组件通过 `defineExpose` 暴露了丰富的 API，允许父组件程序化地控制播放器：
+
+### 基础用法
+
+```vue
+<script setup lang="ts">
+import type { MusicPlayerAPI } from '@/components/exports'
+import { ref } from 'vue'
+import { MusicPlayer } from '@/components/exports'
+
+const playerRef = ref<MusicPlayerAPI>()
+
+function playMusic() {
+  playerRef.value?.play()
+}
+
+function pauseMusic() {
+  playerRef.value?.pause()
+}
+
+function nextTrack() {
+  playerRef.value?.next()
+}
+
+function showLyrics() {
+  playerRef.value?.showLyrics()
+}
+</script>
+
+<template>
+  <div>
+    <MusicPlayer ref="playerRef" :playlist="playlist" />
+    <div class="controls">
+      <button @click="playMusic">
+        播放
+      </button>
+      <button @click="pauseMusic">
+        暂停
+      </button>
+      <button @click="nextTrack">
+        下一首
+      </button>
+      <button @click="showLyrics">
+        显示歌词
+      </button>
+    </div>
+  </div>
+</template>
+```
+
+### API 分类
+
+#### 播放控制
+- `play()` - 开始播放
+- `pause()` - 暂停播放
+- `toggle()` - 切换播放/暂停状态
+- `stop()` - 停止播放并重置进度
+
+#### 歌曲切换
+- `next()` - 下一首歌曲
+- `previous()` - 上一首歌曲
+- `skipTo(index: number)` - 跳转到指定索引的歌曲
+
+#### 进度控制
+- `seekTo(time: number)` - 跳转到指定时间（秒）
+- `seekToPercentage(percentage: number)` - 跳转到指定百分比位置
+
+#### 音量控制
+- `setVolume(volume: number)` - 设置音量（0-1）
+- `mute()` - 静音
+- `unmute()` - 取消静音
+- `toggleMute()` - 切换静音状态
+
+#### 播放模式
+- `setPlayMode(mode: 'sequence' | 'loop' | 'random')` - 设置播放模式
+- `togglePlayMode()` - 循环切换播放模式
+
+#### 界面控制
+- `expand()` - 展开播放器
+- `collapse()` - 收起播放器
+- `toggleExpanded()` - 切换展开状态
+
+#### 歌词控制
+- `showLyrics()` - 显示歌词
+- `hideLyrics()` - 隐藏歌词
+- `toggleLyrics()` - 切换歌词显示状态
+
+#### 位置控制
+- `setPosition(x: number, y: number)` - 设置播放器位置
+- `centerPlayer()` - 将播放器居中显示
+
+#### 状态获取
+- `getCurrentSong()` - 获取当前歌曲信息
+- `getCurrentTime()` - 获取当前播放时间
+- `getDuration()` - 获取歌曲总时长
+- `getVolume()` - 获取当前音量
+- `getProgress()` - 获取播放进度百分比
+- `getPlayMode()` - 获取当前播放模式
+- `getPosition()` - 获取播放器位置
+
+#### 状态检查
+- `isPlaying()` - 是否正在播放
+- `isExpanded()` - 是否已展开
+- `isLoading()` - 是否正在加载
+- `hasError()` - 是否有错误
+- `isMuted()` - 是否静音
+- `isShowingLyrics()` - 是否显示歌词
+
+#### 工具方法
+- `reload()` - 重新加载当前歌曲
+- `skipToNextPlayable()` - 跳过错误歌曲到下一首可播放的
+
+### 高级用法示例
+
+```vue
+<script setup lang="ts">
+import type { MusicPlayerAPI } from '@/components/exports'
+import { onMounted, ref } from 'vue'
+import { MusicPlayer } from '@/components/exports'
+
+const playerRef = ref<MusicPlayerAPI>()
+
+onMounted(() => {
+  // 自动播放第一首歌
+  setTimeout(() => {
+    playerRef.value?.play()
+  }, 1000)
+
+  // 设置音量为 50%
+  playerRef.value?.setVolume(0.5)
+
+  // 设置随机播放模式
+  playerRef.value?.setPlayMode('random')
+
+  // 将播放器定位到屏幕右下角
+  playerRef.value?.setPosition(window.innerWidth - 340, window.innerHeight - 84)
+})
+
+// 监听键盘快捷键
+function handleKeydown(event: KeyboardEvent) {
+  if (!playerRef.value)
+    return
+
+  switch (event.code) {
+    case 'Space':
+      event.preventDefault()
+      playerRef.value.toggle()
+      break
+    case 'ArrowRight':
+      event.preventDefault()
+      playerRef.value.next()
+      break
+    case 'ArrowLeft':
+      event.preventDefault()
+      playerRef.value.previous()
+      break
+    case 'KeyL':
+      event.preventDefault()
+      playerRef.value.toggleLyrics()
+      break
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
+</script>
+```
