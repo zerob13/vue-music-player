@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { Song } from './type'
+import type { SkinConfig, SkinPreset, Song } from './type'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { applySkinToElement, generateCSSVariables, getSkinConfig } from './skins.js'
 
 const props = defineProps({
   playlist: {
@@ -10,6 +11,58 @@ const props = defineProps({
   initialPosition: {
     type: Object as () => { x?: number, y?: number },
     default: () => ({}),
+  },
+  skin: {
+    type: [String, Object],
+    default: 'default',
+  },
+  theme: {
+    type: String,
+    default: undefined,
+  },
+  playerStyle: {
+    type: String,
+    default: undefined,
+  },
+  draggable: {
+    type: Boolean,
+    default: true,
+  },
+  boundaryCheck: {
+    type: Boolean,
+    default: true,
+  },
+  showLyrics: {
+    type: Boolean,
+    default: false,
+  },
+  showPlayModeButton: {
+    type: Boolean,
+    default: true,
+  },
+  showVolumeControl: {
+    type: Boolean,
+    default: true,
+  },
+  initialVolume: {
+    type: Number,
+    default: 0.7,
+  },
+  initialPlayMode: {
+    type: String,
+    default: 'sequence',
+  },
+  autoPlay: {
+    type: Boolean,
+    default: false,
+  },
+  resizable: {
+    type: Boolean,
+    default: false,
+  },
+  positionMargin: {
+    type: Number,
+    default: 16,
   },
 })
 
@@ -55,6 +108,13 @@ const coverImageError = ref(false)
 // 播放模式：sequence 顺序播放，loop 单曲循环，random 随机播放
 const playMode = ref<'sequence' | 'loop' | 'random'>('sequence')
 
+// 皮肤相关
+const currentSkin = ref<SkinPreset | SkinConfig>(props.skin as SkinPreset | SkinConfig)
+const _skinConfig = computed(() => getSkinConfig(currentSkin.value))
+
+// DOM 引用
+const _playerRef = ref<HTMLElement>()
+
 // 默认的音乐封面SVG占位图
 const defaultCoverSvg = '/favicon.svg'
 
@@ -95,6 +155,39 @@ const progressPercentage = computed(() =>
   duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0,
 )
 const currentLyrics = computed(() => currentSong.value.lyrics || [])
+
+// 皮肤相关方法
+function applySkin() {
+  if (_playerRef.value) {
+    applySkinToElement(_playerRef.value, _skinConfig.value)
+  }
+}
+
+function _setSkin(skin: SkinPreset | SkinConfig) {
+  currentSkin.value = skin
+  nextTick(() => {
+    applySkin()
+  })
+}
+
+function _getSkin() {
+  return currentSkin.value
+}
+
+// 监听皮肤变化
+watch(() => props.skin, (newSkin) => {
+  currentSkin.value = newSkin as SkinPreset | SkinConfig
+  nextTick(() => {
+    applySkin()
+  })
+})
+
+// 监听皮肤配置变化
+watch(_skinConfig, () => {
+  nextTick(() => {
+    applySkin()
+  })
+})
 
 // 方法
 function toggleExpanded() {
@@ -239,7 +332,6 @@ function previousSong() {
     currentIndex.value--
     loadCurrentSong()
   }
-  // 顺序播放到第一首就不再继续
 }
 
 // 自动跳过有错误的歌曲
@@ -1143,15 +1235,11 @@ defineExpose({
 </script>
 
 <template>
-  <div
-    class="music-player"
-    :class="{ expanded: isExpanded, mini: !isExpanded, playing: isPlaying, dragging: isDraggingPlayer }"
-    :style="{
+  <div class="music-player"
+    :class="{ expanded: isExpanded, mini: !isExpanded, playing: isPlaying, dragging: isDraggingPlayer }" :style="{
       transform: `translate(${playerPosition.x}px, ${playerPosition.y}px)`,
       width: isExpanded ? `${playerSize.width}px` : '20rem',
-    }"
-    @mousedown="startPlayerDragging"
-  >
+    }" @mousedown="startPlayerDragging">
     <!-- 流线型边框效果 -->
     <!-- 流线型边框效果 - 现在通过CSS伪元素实现 -->
 
@@ -1162,13 +1250,8 @@ defineExpose({
     <div v-if="!isExpanded" class="mini-player" @click="handleMiniPlayerClick">
       <div class="mini-left">
         <div class="mini-cover">
-          <img
-            :src="currentCover"
-            :alt="currentSong.title"
-            class="cover-image"
-            :class="{ playing: isPlaying }"
-            @error="handleCoverImageError"
-          >
+          <img :src="currentCover" :alt="currentSong.title" class="cover-image" :class="{ playing: isPlaying }"
+            @error="handleCoverImageError">
         </div>
         <div class="mini-info">
           <div class="mini-title">
@@ -1187,7 +1270,8 @@ defineExpose({
         <button class="mini-control-btn mini-prev-btn" title="上一首" @click.stop="previousSong">
           <i class="i-carbon-skip-back" />
         </button>
-        <button class="mini-play-btn" :disabled="isLoading || hasError" :class="{ error: hasError, playing: isPlaying }" @click.stop="togglePlay">
+        <button class="mini-play-btn" :disabled="isLoading || hasError" :class="{ error: hasError, playing: isPlaying }"
+          @click.stop="togglePlay">
           <i v-if="isLoading" class="i-carbon-restart animate-spin play-icon" />
           <i v-else-if="hasError" class="i-carbon-warning play-icon" />
           <i v-else :class="isPlaying ? 'i-carbon-pause-filled' : 'i-carbon-play-filled'" class="play-icon" />
@@ -1203,47 +1287,23 @@ defineExpose({
       <!-- 顶部音量控制 -->
       <div class="top-controls">
         <div class="volume-controls">
-          <button
-            class="volume-btn"
-            :class="{ active: showVolumeSlider || isVolumeButtonDragging, muted: isMuted }"
-            @mousedown="startVolumeButtonDragging"
-          >
-            <i
-              :class="isMuted || volume === 0 ? 'i-carbon-volume-mute' : volume < 0.5 ? 'i-carbon-volume-down' : 'i-carbon-volume-up'"
-              class="volume-icon"
-            />
+          <button class="volume-btn" :class="{ active: showVolumeSlider || isVolumeButtonDragging, muted: isMuted }"
+            @mousedown="startVolumeButtonDragging">
+            <i :class="isMuted || volume === 0 ? 'i-carbon-volume-mute' : volume < 0.5 ? 'i-carbon-volume-down' : 'i-carbon-volume-up'"
+              class="volume-icon" />
             <span class="volume-text">{{ isMuted ? '0%' : `${Math.round(volume * 100)}%` }}</span>
           </button>
 
-          <div
-            class="volume-slider-container"
-            :class="{ show: showVolumeSlider }"
-          >
-            <div
-              ref="volumeBar"
-              class="volume-slider"
-              @click="setVolumeHorizontal"
-              @mousedown="startVolumeDragging"
-            >
-              <div
-                class="volume-fill"
-                :style="{ width: `${volume * 100}%` }"
-              />
-              <div
-                class="volume-thumb"
-                :style="{ left: `${volume * 100}%` }"
-                :class="{ dragging: isVolumeDragging }"
-              />
+          <div class="volume-slider-container" :class="{ show: showVolumeSlider }">
+            <div ref="volumeBar" class="volume-slider" @click="setVolumeHorizontal" @mousedown="startVolumeDragging">
+              <div class="volume-fill" :style="{ width: `${volume * 100}%` }" />
+              <div class="volume-thumb" :style="{ left: `${volume * 100}%` }" :class="{ dragging: isVolumeDragging }" />
             </div>
           </div>
         </div>
         <!-- 播放模式按钮 -->
-        <button
-          class="playmode-btn"
-          :class="{ active: playMode !== 'sequence' }"
-          :title="playModeText"
-          @click="togglePlayMode"
-        >
+        <button class="playmode-btn" :class="{ active: playMode !== 'sequence' }" :title="playModeText"
+          @click="togglePlayMode">
           <i class="text-base" :class="[playModeIcon]" />
         </button>
         <!-- 右上角关闭按钮 -->
@@ -1255,12 +1315,7 @@ defineExpose({
       <!-- 专辑封面 -->
       <div class="album-cover-container">
         <div class="album-cover" :class="{ playing: isPlaying }">
-          <img
-            :src="currentCover"
-            :alt="currentSong.title"
-            class="cover-image"
-            @error="handleCoverImageError"
-          >
+          <img :src="currentCover" :alt="currentSong.title" class="cover-image" @error="handleCoverImageError">
         </div>
       </div>
 
@@ -1308,16 +1363,10 @@ defineExpose({
       </div>
 
       <div v-if="showLyrics" ref="lyricsContainer" class="lyrics-container">
-        <div
-          v-for="(line, index) in currentLyrics"
-          :key="index"
-          class="lyrics-line"
-          :class="{
-            active: index === currentLyricIndex,
-            passed: index < currentLyricIndex,
-          }"
-          @click="seekToLyricTime(line.time)"
-        >
+        <div v-for="(line, index) in currentLyrics" :key="index" class="lyrics-line" :class="{
+          active: index === currentLyricIndex,
+          passed: index < currentLyricIndex,
+        }" @click="seekToLyricTime(line.time)">
           {{ line.words }}
         </div>
         <div v-if="currentLyrics.length === 0" class="no-lyrics">
@@ -1332,30 +1381,13 @@ defineExpose({
           <span>{{ formatTime(currentTime) }}</span>
           <span>{{ formatTime(duration) }}</span>
         </div>
-        <div
-          ref="progressBar"
-          class="progress-bar"
-          @click="seekTo"
-          @mousedown="startDragging"
-          @mousemove="onProgressHover"
-          @mouseup="stopDragging"
-          @mouseenter="isHovering = true"
-          @mouseleave="() => { isHovering = false; stopDragging(); }"
-        >
-          <div
-            class="progress-fill"
-            :style="{ width: `${progressPercentage}%` }"
-          />
-          <div
-            class="progress-thumb"
-            :style="{ left: `${progressPercentage}%` }"
-            :class="{ dragging: isDragging }"
-          />
+        <div ref="progressBar" class="progress-bar" @click="seekTo" @mousedown="startDragging"
+          @mousemove="onProgressHover" @mouseup="stopDragging" @mouseenter="isHovering = true"
+          @mouseleave="() => { isHovering = false; stopDragging(); }">
+          <div class="progress-fill" :style="{ width: `${progressPercentage}%` }" />
+          <div class="progress-thumb" :style="{ left: `${progressPercentage}%` }" :class="{ dragging: isDragging }" />
           <!-- 缓冲进度条 -->
-          <div
-            class="progress-buffer"
-            :style="{ width: `${bufferPercentage}%` }"
-          />
+          <div class="progress-buffer" :style="{ width: `${bufferPercentage}%` }" />
         </div>
         <!-- 进度条标签 -->
         <div v-if="isDragging || isHovering" class="progress-labels">
@@ -1367,59 +1399,41 @@ defineExpose({
 
       <!-- 控制按钮 -->
       <div class="controls">
-        <button
-          class="control-btn"
-          :disabled="playMode === 'sequence' && currentIndex === 0"
-          @click="previousSong"
-        >
+        <button class="control-btn" :disabled="playMode === 'sequence' && currentIndex === 0" @click="previousSong">
           <i class="i-carbon-skip-back-filled text-2xl" />
         </button>
 
-        <button
-          class="play-btn"
-          :disabled="isLoading || hasError"
-          :class="{ error: hasError }"
-          @click="togglePlay"
-        >
+        <button class="play-btn" :disabled="isLoading || hasError" :class="{ error: hasError }" @click="togglePlay">
           <i v-if="isLoading" class="i-carbon-restart text-3xl animate-spin" />
           <i v-else-if="hasError" class="i-carbon-warning text-3xl" />
           <i v-else :class="isPlaying ? 'i-carbon-pause-filled' : 'i-carbon-play-filled'" class="text-3xl" />
         </button>
 
-        <button
-          class="control-btn"
-          :disabled="playMode === 'sequence' && currentIndex === playlist.length - 1"
-          @click="nextSong"
-        >
+        <button class="control-btn" :disabled="playMode === 'sequence' && currentIndex === playlist.length - 1"
+          @click="nextSong">
           <i class="i-carbon-skip-forward-filled text-2xl" />
         </button>
       </div>
     </div>
 
     <!-- 隐藏的音频元素 -->
-    <audio
-      ref="audioPlayer"
-      preload="metadata"
-      crossorigin="anonymous"
-      @loadedmetadata="onLoadedMetadata"
-      @timeupdate="onTimeUpdate"
-      @ended="onSongEnd"
-      @error="onAudioError"
-      @canplay="onAudioCanPlay"
-      @loadstart="onLoadStart"
-    />
+    <audio ref="audioPlayer" preload="metadata" crossorigin="anonymous" @loadedmetadata="onLoadedMetadata"
+      @timeupdate="onTimeUpdate" @ended="onSongEnd" @error="onAudioError" @canplay="onAudioCanPlay"
+      @loadstart="onLoadStart" />
   </div>
 </template>
 
 <style scoped>
 .music-player {
-  position: fixed; /* 改为 fixed 定位，确保拖拽功能正常 */
+  position: fixed;
+  /* 改为 fixed 定位，确保拖拽功能正常 */
   top: 0;
   left: 0;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.8);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  overflow: visible; /* 改为 visible 以显示边框动画 */
+  overflow: visible;
+  /* 改为 visible 以显示边框动画 */
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1431,7 +1445,8 @@ defineExpose({
   cursor: grabbing;
   user-select: none;
   z-index: 1000;
-  transition: none; /* 拖拽时禁用过渡效果 */
+  transition: none;
+  /* 拖拽时禁用过渡效果 */
 }
 
 .music-player.mini {
@@ -1500,9 +1515,11 @@ defineExpose({
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
@@ -1533,7 +1550,8 @@ defineExpose({
   justify-content: space-between;
   padding: 0.875rem;
   height: 100%;
-  cursor: move; /* 默认为移动光标 */
+  cursor: move;
+  /* 默认为移动光标 */
   transition: all 0.3s ease;
   position: relative;
   z-index: 20;
@@ -1548,7 +1566,8 @@ defineExpose({
   flex: 1;
   min-width: 0;
   gap: 0.75rem;
-  cursor: pointer; /* 点击展开的区域 */
+  cursor: pointer;
+  /* 点击展开的区域 */
 }
 
 .music-player.expanded .mini-player {
@@ -1567,7 +1586,8 @@ defineExpose({
   padding: 1.5rem;
   position: relative;
   z-index: 20;
-  cursor: move; /* 默认为拖拽光标 */
+  cursor: move;
+  /* 默认为拖拽光标 */
 }
 
 .music-player.expanded .expanded-content {
@@ -1615,7 +1635,8 @@ defineExpose({
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 2px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
-  cursor: pointer; /* 点击展开 */
+  cursor: pointer;
+  /* 点击展开 */
 }
 
 .mini-cover:hover {
@@ -1647,13 +1668,15 @@ defineExpose({
   display: flex;
   justify-content: center;
   margin-bottom: 1.5rem;
-  cursor: default; /* 阻止继承拖拽光标 */
+  cursor: default;
+  /* 阻止继承拖拽光标 */
 }
 
 .song-info {
   text-align: center;
   margin-bottom: 1.5rem;
-  cursor: default; /* 阻止继承拖拽光标 */
+  cursor: default;
+  /* 阻止继承拖拽光标 */
 }
 
 .song-title {
@@ -1759,7 +1782,8 @@ defineExpose({
 
 .progress-section {
   margin-bottom: 1.5rem;
-  cursor: default; /* 阻止继承拖拽光标 */
+  cursor: default;
+  /* 阻止继承拖拽光标 */
 }
 
 .time-display {
@@ -1780,8 +1804,10 @@ defineExpose({
   align-items: center;
   gap: 1.5rem;
   margin-bottom: 0.5rem;
-  height: 4rem; /* 确保容器有固定高度 */
-  cursor: default; /* 阻止继承拖拽光标 */
+  height: 4rem;
+  /* 确保容器有固定高度 */
+  cursor: default;
+  /* 阻止继承拖拽光标 */
 }
 
 .control-btn {
@@ -1819,7 +1845,8 @@ defineExpose({
 .control-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none; /* 禁用状态下不进行缩放 */
+  transform: none;
+  /* 禁用状态下不进行缩放 */
 }
 
 .play-btn {
@@ -1883,9 +1910,12 @@ defineExpose({
 }
 
 @keyframes pulse-error {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.1);
   }
+
   50% {
     box-shadow: 0 25px 50px -12px rgba(220, 38, 38, 0.3);
   }
@@ -1895,6 +1925,7 @@ defineExpose({
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -2052,7 +2083,8 @@ defineExpose({
   flex: 1;
   min-width: 0;
   line-height: 1.2;
-  cursor: pointer; /* 点击展开 */
+  cursor: pointer;
+  /* 点击展开 */
 }
 
 .mini-title {
@@ -2206,12 +2238,15 @@ defineExpose({
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow:
       0 8px 32px rgba(102, 126, 234, 0.4),
       0 4px 16px rgba(118, 75, 162, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
+
   50% {
     box-shadow:
       0 12px 40px rgba(102, 126, 234, 0.6),
@@ -2225,10 +2260,12 @@ defineExpose({
     transform: scale(1);
     opacity: 0.8;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 0.4;
   }
+
   100% {
     transform: scale(1);
     opacity: 0.8;
@@ -2246,7 +2283,8 @@ defineExpose({
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: default; /* 阻止继承父级的 move cursor */
+  cursor: default;
+  /* 阻止继承父级的 move cursor */
 }
 
 .dark .mini-controls {
@@ -2306,7 +2344,8 @@ defineExpose({
   align-items: center;
   margin-bottom: 1.5rem;
   position: relative;
-  cursor: default; /* 阻止继承拖拽光标 */
+  cursor: default;
+  /* 阻止继承拖拽光标 */
 }
 
 .close-btn {
@@ -2455,7 +2494,8 @@ defineExpose({
   /* 防止内容变化时的跳动 */
   contain: layout style;
   will-change: auto;
-  cursor: default; /* 阻止继承拖拽光标 */
+  cursor: default;
+  /* 阻止继承拖拽光标 */
 }
 
 .lyrics-header {
@@ -2590,7 +2630,8 @@ defineExpose({
 .lyrics-toggle-mini {
   margin-bottom: 0.5rem;
   text-align: center;
-  cursor: default; /* 阻止继承拖拽光标 */
+  cursor: default;
+  /* 阻止继承拖拽光标 */
 }
 
 .lyrics-toggle-btn {
