@@ -46,16 +46,15 @@ export interface MusicPlayerProps {
 // 皮肤预设类型 - 预定义的完整皮肤
 export type SkinPreset
   = 'default' // 默认现代风格
-  | 'glassmorphism' // 玻璃态风格
-  | 'neumorphism' // 新拟物风格
-  | 'minimal' // 极简风格
-  | 'retro' // 复古风格
-  | 'neon' // 霓虹风格
-  | 'gradient' // 渐变风格
-  | 'dark-pro' // 专业暗色
-  | 'light-elegant' // 优雅浅色
-  | 'colorful' // 多彩风格
-()
+    | 'glassmorphism' // 玻璃态风格
+    | 'neumorphism' // 新拟物风格
+    | 'minimal' // 极简风格
+    | 'retro' // 复古风格
+    | 'neon' // 霓虹风格
+    | 'gradient' // 渐变风格
+    | 'dark-pro' // 专业暗色
+    | 'light-elegant' // 优雅浅色
+    | 'colorful' // 多彩风格
 
 // 自定义皮肤配置
 export interface SkinConfig {
@@ -102,25 +101,25 @@ export type PositionPreset = 'bottom-right' | 'bottom-left' | 'top-right' | 'top
 // 主题类型 - 颜色主题
 export type Theme
   = 'light'
-  | 'dark'
-  | 'purple'
-  | 'blue'
-  | 'green'
-  | 'orange'
-  | 'pink'
-  | 'red'
-  | 'teal'
-  | 'indigo'
-  | 'auto' // 跟随系统
+    | 'dark'
+    | 'purple'
+    | 'blue'
+    | 'green'
+    | 'orange'
+    | 'pink'
+    | 'red'
+    | 'teal'
+    | 'indigo'
+    | 'auto' // 跟随系统
 
 // 播放器样式类型 - 布局和交互风格
 export type PlayerStyle
   = 'modern' // 现代风格 - 圆角、阴影、动画
-  | 'classic' // 经典风格 - 传统音乐播放器外观
-  | 'minimal' // 极简风格 - 简洁线条、少装饰
-  | 'compact' // 紧凑风格 - 节省空间
-  | 'floating' // 浮动风格 - 悬浮效果
-  | 'card' // 卡片风格 - 卡片式布局
+    | 'classic' // 经典风格 - 传统音乐播放器外观
+    | 'minimal' // 极简风格 - 简洁线条、少装饰
+    | 'compact' // 紧凑风格 - 节省空间
+    | 'floating' // 浮动风格 - 悬浮效果
+    | 'card' // 卡片风格 - 卡片式布局
 
 // 播放模式类型
 export type PlayMode = 'sequence' | 'loop' | 'random'

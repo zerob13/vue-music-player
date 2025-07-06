@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SkinConfig, SkinPreset, Song } from './type'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { applySkinToElement, generateCSSVariables, getSkinConfig } from './skins.js'
+import { applySkinToElement, getSkinConfig } from './skins.js'
 
 const props = defineProps({
   playlist: {
@@ -1235,11 +1235,13 @@ defineExpose({
 </script>
 
 <template>
-  <div class="music-player"
+  <div
+    class="music-player"
     :class="{ expanded: isExpanded, mini: !isExpanded, playing: isPlaying, dragging: isDraggingPlayer }" :style="{
       transform: `translate(${playerPosition.x}px, ${playerPosition.y}px)`,
       width: isExpanded ? `${playerSize.width}px` : '20rem',
-    }" @mousedown="startPlayerDragging">
+    }" @mousedown="startPlayerDragging"
+  >
     <!-- 流线型边框效果 -->
     <!-- 流线型边框效果 - 现在通过CSS伪元素实现 -->
 
@@ -1250,8 +1252,10 @@ defineExpose({
     <div v-if="!isExpanded" class="mini-player" @click="handleMiniPlayerClick">
       <div class="mini-left">
         <div class="mini-cover">
-          <img :src="currentCover" :alt="currentSong.title" class="cover-image" :class="{ playing: isPlaying }"
-            @error="handleCoverImageError">
+          <img
+            :src="currentCover" :alt="currentSong.title" class="cover-image" :class="{ playing: isPlaying }"
+            @error="handleCoverImageError"
+          >
         </div>
         <div class="mini-info">
           <div class="mini-title">
@@ -1270,8 +1274,10 @@ defineExpose({
         <button class="mini-control-btn mini-prev-btn" title="上一首" @click.stop="previousSong">
           <i class="i-carbon-skip-back" />
         </button>
-        <button class="mini-play-btn" :disabled="isLoading || hasError" :class="{ error: hasError, playing: isPlaying }"
-          @click.stop="togglePlay">
+        <button
+          class="mini-play-btn" :disabled="isLoading || hasError" :class="{ error: hasError, playing: isPlaying }"
+          @click.stop="togglePlay"
+        >
           <i v-if="isLoading" class="i-carbon-restart animate-spin play-icon" />
           <i v-else-if="hasError" class="i-carbon-warning play-icon" />
           <i v-else :class="isPlaying ? 'i-carbon-pause-filled' : 'i-carbon-play-filled'" class="play-icon" />
@@ -1287,10 +1293,14 @@ defineExpose({
       <!-- 顶部音量控制 -->
       <div class="top-controls">
         <div class="volume-controls">
-          <button class="volume-btn" :class="{ active: showVolumeSlider || isVolumeButtonDragging, muted: isMuted }"
-            @mousedown="startVolumeButtonDragging">
-            <i :class="isMuted || volume === 0 ? 'i-carbon-volume-mute' : volume < 0.5 ? 'i-carbon-volume-down' : 'i-carbon-volume-up'"
-              class="volume-icon" />
+          <button
+            class="volume-btn" :class="{ active: showVolumeSlider || isVolumeButtonDragging, muted: isMuted }"
+            @mousedown="startVolumeButtonDragging"
+          >
+            <i
+              :class="isMuted || volume === 0 ? 'i-carbon-volume-mute' : volume < 0.5 ? 'i-carbon-volume-down' : 'i-carbon-volume-up'"
+              class="volume-icon"
+            />
             <span class="volume-text">{{ isMuted ? '0%' : `${Math.round(volume * 100)}%` }}</span>
           </button>
 
@@ -1302,8 +1312,10 @@ defineExpose({
           </div>
         </div>
         <!-- 播放模式按钮 -->
-        <button class="playmode-btn" :class="{ active: playMode !== 'sequence' }" :title="playModeText"
-          @click="togglePlayMode">
+        <button
+          class="playmode-btn" :class="{ active: playMode !== 'sequence' }" :title="playModeText"
+          @click="togglePlayMode"
+        >
           <i class="text-base" :class="[playModeIcon]" />
         </button>
         <!-- 右上角关闭按钮 -->
@@ -1363,10 +1375,12 @@ defineExpose({
       </div>
 
       <div v-if="showLyrics" ref="lyricsContainer" class="lyrics-container">
-        <div v-for="(line, index) in currentLyrics" :key="index" class="lyrics-line" :class="{
-          active: index === currentLyricIndex,
-          passed: index < currentLyricIndex,
-        }" @click="seekToLyricTime(line.time)">
+        <div
+          v-for="(line, index) in currentLyrics" :key="index" class="lyrics-line" :class="{
+            active: index === currentLyricIndex,
+            passed: index < currentLyricIndex,
+          }" @click="seekToLyricTime(line.time)"
+        >
           {{ line.words }}
         </div>
         <div v-if="currentLyrics.length === 0" class="no-lyrics">
@@ -1381,9 +1395,11 @@ defineExpose({
           <span>{{ formatTime(currentTime) }}</span>
           <span>{{ formatTime(duration) }}</span>
         </div>
-        <div ref="progressBar" class="progress-bar" @click="seekTo" @mousedown="startDragging"
+        <div
+          ref="progressBar" class="progress-bar" @click="seekTo" @mousedown="startDragging"
           @mousemove="onProgressHover" @mouseup="stopDragging" @mouseenter="isHovering = true"
-          @mouseleave="() => { isHovering = false; stopDragging(); }">
+          @mouseleave="() => { isHovering = false; stopDragging(); }"
+        >
           <div class="progress-fill" :style="{ width: `${progressPercentage}%` }" />
           <div class="progress-thumb" :style="{ left: `${progressPercentage}%` }" :class="{ dragging: isDragging }" />
           <!-- 缓冲进度条 -->
@@ -1409,17 +1425,21 @@ defineExpose({
           <i v-else :class="isPlaying ? 'i-carbon-pause-filled' : 'i-carbon-play-filled'" class="text-3xl" />
         </button>
 
-        <button class="control-btn" :disabled="playMode === 'sequence' && currentIndex === playlist.length - 1"
-          @click="nextSong">
+        <button
+          class="control-btn" :disabled="playMode === 'sequence' && currentIndex === playlist.length - 1"
+          @click="nextSong"
+        >
           <i class="i-carbon-skip-forward-filled text-2xl" />
         </button>
       </div>
     </div>
 
     <!-- 隐藏的音频元素 -->
-    <audio ref="audioPlayer" preload="metadata" crossorigin="anonymous" @loadedmetadata="onLoadedMetadata"
+    <audio
+      ref="audioPlayer" preload="metadata" crossorigin="anonymous" @loadedmetadata="onLoadedMetadata"
       @timeupdate="onTimeUpdate" @ended="onSongEnd" @error="onAudioError" @canplay="onAudioCanPlay"
-      @loadstart="onLoadStart" />
+      @loadstart="onLoadStart"
+    />
   </div>
 </template>
 

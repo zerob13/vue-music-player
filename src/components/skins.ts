@@ -1,4 +1,4 @@
-import type { PlayerStyle, SkinConfig, SkinPreset, Theme } from './type.js'
+import type { SkinConfig, SkinPreset } from './type.js'
 
 // 预定义皮肤配置
 export const SKIN_PRESETS: Record<SkinPreset, SkinConfig> = {
