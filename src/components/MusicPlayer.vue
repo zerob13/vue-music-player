@@ -66,6 +66,11 @@ const props = defineProps({
   },
 })
 
+// 新增深拷贝工具
+function deepClone(obj: any) {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 // 响应式数据
 const isPlaying = ref(false)
 const isLoading = ref(false)
@@ -113,7 +118,7 @@ const currentSkin = ref<SkinPreset | SkinConfig>(props.skin as SkinPreset | Skin
 const _skinConfig = computed(() => getSkinConfig(currentSkin.value))
 
 // DOM 引用
-const _playerRef = ref<HTMLElement>()
+const playerRootRef = ref<HTMLElement>()
 
 // 默认的音乐封面SVG占位图
 const defaultCoverSvg = '/favicon.svg'
@@ -158,8 +163,8 @@ const currentLyrics = computed(() => currentSong.value.lyrics || [])
 
 // 皮肤相关方法
 function applySkin() {
-  if (_playerRef.value) {
-    applySkinToElement(_playerRef.value, _skinConfig.value)
+  if (playerRootRef.value) {
+    applySkinToElement(playerRootRef.value, _skinConfig.value)
   }
 }
 
@@ -175,12 +180,23 @@ function _getSkin() {
 }
 
 // 监听皮肤变化
-watch(() => props.skin, (newSkin) => {
-  currentSkin.value = newSkin as SkinPreset | SkinConfig
-  nextTick(() => {
-    applySkin()
-  })
-})
+watch(
+  () => props.skin,
+  (newSkin) => {
+    // 如果是对象，做深拷贝，避免响应式丢失
+    if (typeof newSkin === 'object' && newSkin !== null) {
+      currentSkin.value = deepClone(newSkin)
+    }
+    else {
+      currentSkin.value = newSkin as SkinPreset | SkinConfig
+    }
+    console.log('newSkin', newSkin)
+    nextTick(() => {
+      applySkin()
+    })
+  },
+  { deep: true }, // 深度监听
+)
 
 // 监听皮肤配置变化
 watch(_skinConfig, () => {
@@ -1236,6 +1252,7 @@ defineExpose({
 
 <template>
   <div
+    ref="playerRootRef"
     class="music-player"
     :class="{ expanded: isExpanded, mini: !isExpanded, playing: isPlaying, dragging: isDraggingPlayer }" :style="{
       transform: `translate(${playerPosition.x}px, ${playerPosition.y}px)`,

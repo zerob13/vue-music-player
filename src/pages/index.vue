@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Song } from '../components/type'
-import { ref } from 'vue'
 import GitForkVue from '@simon_he/git-fork-vue'
+import { ref } from 'vue'
 import daoxiangLrc from '../../public/audio/daoxiang.lrc'
 import kaibuliaokouLrc from '../../public/audio/kaibuliaokou.lrc'
 import MusicPlayer from '../components/MusicPlayer.vue'
@@ -42,7 +42,8 @@ const skin = ref('default')
 
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900 py-8">
+    class="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900 py-8"
+  >
     <div>
       <!-- 皮肤切换下拉菜单 -->
       <div class="flex justify-center mb-8">
@@ -69,8 +70,10 @@ const skin = ref('default')
       <!-- <MusicPlayer :playlist="playlist" :initial-position="{ x: 100, y: 100 }" :skin="skin" /> -->
     </div>
   </div>
-  <GitForkVue link="https://github.com/Simon-He95/vue-music-player" position="right" type="corners"
-    content="Star on GitHub" color="#764ba2" />
+  <GitForkVue
+    link="https://github.com/Simon-He95/vue-music-player" position="right" type="corners"
+    content="Star on GitHub" color="#764ba2"
+  />
 </template>
 
 <style scoped></style>
